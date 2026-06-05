@@ -19,7 +19,7 @@
 
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
-| F-001 | Project scaffolding — Next.js 15, Supabase, Docker, Vercel, GitHub Actions CI/CD | P0 | 📋 | — | 1d | | |
+| F-001 | Project scaffolding — Next.js 15, Supabase, Docker, Vercel, GitHub Actions CI/CD | P0 | 🔨 | — | 1d | feature/F-001 | |
 | F-002 | Azure AD SSO authentication (Supabase Auth + OAuth2 + middleware route protection) | P0 | 📋 | F-001 | 1d | | |
 | F-003 | Full database schema + RLS policies + helper functions + triggers + indexes | P0 | 📋 | F-002 | 2d | | |
 | F-004 | User & entity management admin UI (create entities, invite users, assign roles, verify RLS) | P0 | 📋 | F-003 | 2d | | |
@@ -111,3 +111,4 @@
 | 2026-06-01 | No email/password auth | Azure AD SSO is the only permitted identity provider per BRS §10.2 |
 | 2026-06-01 | Resend for transactional email | Required to send email to recipients without a platform account |
 | 2026-06-01 | Single spend_requests table for PRs and expenses | Unified table simplifies approval engine; type column distinguishes them |
+| 2026-06-05 | Email/password auth for local dev (F-001) | Azure AD credentials not yet available from IT Director. Login page shows email/password form in dev; Microsoft button enabled when NEXT_PUBLIC_ENABLE_AZURE_AUTH=true. Azure AD wired in F-002. |
