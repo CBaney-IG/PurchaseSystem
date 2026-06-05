@@ -4,40 +4,42 @@
 
 ## Active Phase
 
-**Phase:** Phase 1 — Foundation (ready to start)
-**Phase goal:** Project scaffolding, Azure AD SSO, full database schema with RLS, user/entity admin UI. Nothing user-facing beyond auth.
+**Phase:** Phase 1 — Foundation (in progress)
+**Phase goal:** Project scaffolding, auth, full database schema with RLS, user/entity admin UI. Nothing user-facing beyond auth.
 
 ## In Progress
 
 | Feature ID | Feature | Branch | Status | Notes |
 |---|---|---|---|---|
-| — | — | — | — | Architecture complete; F-001 is the next action |
+| F-002 | Azure AD SSO | — | ⏸ Blocked | Waiting on Azure AD credentials from IT Director |
+| F-003 | Full database schema + RLS | — | 📋 Ready | Can proceed — email/password auth is working |
 
 ## Last Session Summary
 
-**Date:** 2026-06-01
+**Date:** 2026-06-05
 **What was done:**
-- PRD and user stories written from BRS-USMP-001 and FRS-USMP-001
-- Feature backlog populated with 20 items across 7 phases (~40 dev day estimate)
-- Architecture confirmed: Next.js 15, Supabase, Azure AD SSO, shadcn/ui + Tailwind CSS v4
-- All four architecture docs written (overview, database schema, API contracts, security)
-- ADR-001 created documenting the stack decision
-- Tech stack doc updated to reflect Next.js 15 and full dependency list
-- Environments doc updated with correct local URL (https://localhost:3003) and full variable list
-- CLAUDE.md updated with correct project name and stack description
+- F-001 scaffolding complete and merged to main
+- Next.js 15 project structure, all config files, Supabase clients, TypeScript types
+- Login page with email/password (dev) + disabled Microsoft button (prod)
+- Dashboard layout with minimal sidebar (all nav links, sign-out, active state)
+- Minimal migration: entities + profiles tables + handle_new_user trigger + RLS
+- Email/password auth enabled in local Supabase config for test users
+- GitHub repo live at CBaney-IG/PurchaseSystem; branch protection configured
+- Supabase CLI init, config.toml tuned for project
 
 **What's next:**
-- Run `/new-feature F-001` to scaffold the project (Next.js 15 init, Supabase CLI init, Docker, GitHub Actions, shadcn/ui, all core dependencies)
-- Once F-001 is merged: `npm install` and `npm run dev` will work
+- F-002 (Azure AD SSO) — BLOCKED waiting on IT Director credentials
+- F-003 (Full database schema) — READY to start; skip ahead of F-002
 
 **Open questions / blockers:**
-- Azure AD app registration credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — needed from IT Director before F-002 (auth) can be fully tested
-- Snowflake endpoint URL and webhook secret — needed from Data team before F-014 (Snowflake integration) can be tested
-- Resend API key — needed before F-010 (email notifications) can be tested
-- Production domain / Vercel project name — needed before Vercel setup
+- Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
+- Snowflake endpoint URL — Data team (needed for F-014)
+- Resend API key — needed for F-010 (email notifications)
+- Supabase staging/production projects — create at supabase.com before Vercel setup
 
 ## Session History
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-05 | F-001 scaffolded and merged. App is runnable locally. | Email/password for dev; Azure AD deferred to F-002; minimal schema in F-001 migration |
 | 2026-06-01 | Architecture phase complete. All docs written. | Next.js 15 fixed stack; Azure AD SSO only; https://localhost:3003; single spend_requests table for PRs + expenses |
