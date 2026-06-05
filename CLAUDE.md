@@ -1,7 +1,7 @@
-# Project: [PROJECT_NAME]
+# Project: USMP — Unified Spend Management Platform
 
 ## What This Is
-[One-line description of the product. Replace this after running /init-product]
+A governed, auditable spend management platform replacing email-based procurement approvals across BPO Group with a configurable multi-level approval engine and real-time spend intelligence.
 
 ## Workflow Phases
 
@@ -17,7 +17,7 @@ Projects built from this template move through three phases. At session start, d
 
 ## Tech Stack
 See @docs/architecture/tech-stack.md for full details and swap guides.
-**Default stack** (confirmed or customized during `/init-architecture`): Next.js 14+ (App Router), TypeScript (strict), Supabase (PostgreSQL + Auth), Vercel, Tailwind CSS, Vitest, Playwright, Zod.
+**Confirmed stack** (fixed per PRD — see ADR-001): Next.js 15 (App Router), TypeScript (strict), Supabase (PostgreSQL 15 + RLS + Auth), Vercel Pro, shadcn/ui + Tailwind CSS v4, React Query v5, React Hook Form + Zod, Resend, jose, Docker, Vitest, Playwright. **Local dev:** `https://localhost:3003`.
 
 ## Key Commands
 > **These commands become available after `/new-feature F-001` (project scaffolding).** Until F-001 is done, this template has no `package.json` — `npm` commands will fail. The exact command list depends on the chosen stack; the list below assumes the default Next.js + Supabase stack.

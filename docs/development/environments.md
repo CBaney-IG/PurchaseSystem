@@ -2,130 +2,173 @@
 
 ## Prerequisites
 
-- **Node.js** 18+ (recommended: use nvm to manage versions)
-- **npm** (comes with Node.js)
-- **Git** (for version control)
-- **Supabase account** (free tier is fine for MVP) — supabase.com
-- **Vercel account** (free tier is fine for MVP) — vercel.com
-- **GitHub account** (for repository hosting)
+| Tool | Required Version | Install / Verify |
+|---|---|---|
+| **Node.js** | v20 LTS or later | `node --version` |
+| **npm** | v10 or later | `npm --version` |
+| **Git** | v2.40+ | `git --version` |
+| **Docker Desktop** | v4.30+ | `docker --version` |
+| **VS Code** | Latest stable | `code --version` |
+| **Supabase CLI** | v1.200+ | `supabase --version` (install: `npm install -g supabase`) |
+| **Vercel CLI** | Latest | `vercel --version` (install: `npm install -g vercel`) |
 
 ## Environments
 
-| Environment | Purpose | Database | Deployed To |
-|-------------|---------|----------|-------------|
-| **Local** | Development & debugging | Points to Preview Supabase | localhost:3000 |
-| **Preview** | QA / testing / demos | Preview Supabase project | Vercel preview URL |
-| **Production** | Live users | Production Supabase project | Vercel production URL |
+| Environment | Branch | URL | Supabase Project |
+|---|---|---|---|
+| **Local** | `feature/*` | https://localhost:3003 | Local Supabase (`supabase start`) |
+| **Preview / Staging** | Any PR | Auto-generated Vercel URL | Staging Supabase project |
+| **Production** | `main` (merged) | Vercel Production URL | Production Supabase project |
 
-> **Why local points to the Preview database:** This keeps things simple for MVP. You don't need Docker or a local Supabase instance. If you need isolated local data later, you can add Supabase CLI with `supabase start` for a local Docker-based DB.
+> **Why local uses its own Supabase instance:** The USMP has complex RLS policies, triggers, and seed data. Using a shared staging database for local dev risks polluting test data. Run `supabase start` to spin up a local PostgreSQL + Auth instance via Docker.
 
 ## Initial Setup
 
 ### 1. Clone and install
 ```bash
-git clone [your-repo-url]
-cd [project-name]
+git clone https://github.com/CBaney-IG/PurchaseSystem.git
+cd PurchaseSystem
 npm install
 ```
 
-### 2. Create Supabase projects
-Create two projects in Supabase:
-- **[project-name]-preview** (for dev + preview environments)
-- **[project-name]-production** (for production only)
+### 2. Initialise local Supabase
+```bash
+# Start local Supabase stack (requires Docker Desktop running)
+supabase start
+
+# Output includes:
+#   API URL:     http://localhost:54321
+#   Studio URL:  http://localhost:54323  (local DB GUI)
+#   Anon key:    eyJhbGci...
+#   Service key: eyJhbGci...
+
+# Apply all migrations and seed data
+supabase db reset
+```
 
 ### 3. Set up environment variables
-
-Copy the example env file:
 ```bash
 cp .env.example .env.local
 ```
 
-Fill in your Preview Supabase credentials (from Supabase dashboard → Settings → API Keys):
-```
-NEXT_PUBLIC_SUPABASE_URL=https://[your-preview-project].supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[your-preview-publishable-key]
-SUPABASE_SECRET_KEY=[your-preview-secret-key]
-```
-
-> **Legacy naming:** Supabase renamed `anon key` → `publishable key` and `service_role key` → `secret key`. They are functionally identical — older docs and tutorials referencing the old names still apply, just use the new variable names above.
-
-> ⚠️ Never commit `.env.local` — it's in `.gitignore`.
-
-### 4. Set up Vercel
+Fill in `.env.local` with values from `supabase start` output and credentials from your team:
 
 ```bash
-npx vercel link
+# Local Supabase
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from supabase start>
+SUPABASE_SERVICE_ROLE_KEY=<service key from supabase start>
+
+# Azure AD SSO (get from IT Director)
+AZURE_AD_TENANT_ID=
+AZURE_AD_CLIENT_ID=
+AZURE_AD_CLIENT_SECRET=
+
+# Email (get Resend API key from resend.com)
+RESEND_API_KEY=re_xxxxxxxxxx
+RESEND_FROM_EMAIL=noreply@bpogroup.co.za
+
+# Snowflake integration (get from Data team)
+SNOWFLAKE_WEBHOOK_SECRET=<generate a 64-char random string for local>
+SNOWFLAKE_ENDPOINT_URL=<provided by data team>
+
+# App URL — must match exactly
+NEXT_PUBLIC_APP_URL=https://localhost:3003
+
+# Email token signing (generate a 64-char random string)
+EMAIL_ACTION_SECRET=<64-char random string>
 ```
 
-In the Vercel dashboard, set environment variables:
-- **Preview** environment: Use Preview Supabase credentials
-- **Production** environment: Use Production Supabase credentials
+> ⚠️ Never commit `.env.local` — it is in `.gitignore`. All production secrets are managed in the Vercel dashboard.
 
-### 5. Run database migrations
+### 4. Azure AD OAuth redirect URI (local dev)
+Add `https://localhost:3003/auth/callback` as a redirect URI in the Azure App Registration used for development. Ask the IT Director for access to the 'USMP Development' app registration.
 
+### 5. Start local dev server
 ```bash
-npm run db:migrate
-```
-
-### 6. Start development
-
-```bash
+# HTTPS is required to match Azure AD redirect URI configuration
 npm run dev
+# which runs: next dev --experimental-https --port 3003
 ```
 
-Open http://localhost:3000
+Open **https://localhost:3003** — accept the browser's self-signed certificate warning on first run.
+
+### 6. VS Code extensions (required)
+- ESLint (Microsoft)
+- Prettier — Code Formatter
+- Tailwind CSS IntelliSense (Tailwind Labs)
+- Supabase (Supabase)
+- GitLens (GitKraken)
+- Docker (Microsoft)
 
 ## Environment Variable Reference
 
 | Variable | Description | Where Used |
-|----------|-------------|------------|
+|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Client + Server |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key, safe for client (formerly `anon key`) | Client + Server |
-| `SUPABASE_SECRET_KEY` | Supabase admin key, server only (formerly `service_role key`) | Server only |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/publishable key (safe for browser) | Client + Server |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key — **server only, bypasses RLS** | Server API routes only |
+| `AZURE_AD_TENANT_ID` | Azure AD tenant ID for OAuth | Server |
+| `AZURE_AD_CLIENT_ID` | Azure AD app client ID | Server |
+| `AZURE_AD_CLIENT_SECRET` | Azure AD app client secret | Server |
+| `RESEND_API_KEY` | Resend API key for transactional email | Server |
+| `RESEND_FROM_EMAIL` | From address for outbound email | Server |
+| `SNOWFLAKE_WEBHOOK_SECRET` | Shared secret validating Supabase → USMP webhooks | Server |
+| `SNOWFLAKE_ENDPOINT_URL` | Snowflake data pipeline endpoint URL | Server |
+| `NEXT_PUBLIC_APP_URL` | Full public URL of this environment | Client + Server |
+| `EMAIL_ACTION_SECRET` | HMAC key for signing email approval JWT tokens | Server |
+
+## Seed Data
+
+`supabase db reset` runs all migrations then the seed file at `supabase/seed/seed.sql`.
+
+The seed creates:
+- One DEFAULT entity (`BPO-DEFAULT`)
+- One test entity (`BPO-OPS`)
+- One user of each role (Azure AD emails — must exist in your dev tenant)
+- A full DOA matrix with the indicative thresholds from BRS §5.2
+- Sample cost centres, budgets, and vendor catalogue entries
+- 3 sample spend requests in various statuses
+
+> ⚠️ Seed data uses obviously fake names. Never include real employee data in seed files. Never run seed against production.
+
+## Vercel Setup (first-time)
+
+```bash
+vercel login   # authenticate with GitHub
+vercel         # link project (select org and project name)
+```
+
+In Vercel dashboard > Project > Settings > Environment Variables:
+- **Preview:** Staging Supabase credentials + `NEXT_PUBLIC_APP_URL=<vercel-preview-url>`
+- **Production:** Production Supabase credentials + `NEXT_PUBLIC_APP_URL=<production-url>`
+
+## Supabase Production Setup
+
+1. Create a **separate** Supabase project for production (never share with staging)
+2. Apply migrations: `supabase db push --project-ref <prod-project-ref>`
+3. Verify RLS is enabled on all tables (Table Editor > each table > RLS tab)
+4. Configure Azure AD OAuth with the production redirect URI
+5. Enable Supabase Realtime on the `notifications` table only
+6. Set up DB Webhook: Supabase Dashboard > Database > Webhooks > New Webhook
+   - Table: `approval_events`, Event: INSERT
+   - URL: `https://<prod-url>/api/webhooks/snowflake-push`
+   - Headers: `x-webhook-secret: <SNOWFLAKE_WEBHOOK_SECRET value>`
 
 ## Promoting to Production
 
-1. Merge PR to `main`
-2. Vercel auto-deploys to production
+1. PR approved and merged to `main`
+2. Vercel auto-deploys to production URL
 3. Production uses its own Supabase project (set via Vercel env vars)
-
-## Seed Data & Test Accounts
-
-When you first set up, the database is empty. To have something to work with:
-
-### Seed script
-Create a seed file at `supabase/seed.sql` with sample data for development. Run it with:
-```bash
-npm run db:seed
-```
-
-This script should create:
-- A test user account (use a consistent email like `dev@example.com` so you don't need to sign up each time)
-- Sample data for each core entity in your schema
-- Enough data to test pagination, filtering, and edge cases
-
-### Guidelines for seed data
-- Never include real personal data — use obviously fake names and emails
-- Keep seed data small (10-20 records per table is plenty for dev)
-- Make sure seed data respects all foreign key relationships
-- Include at least one example of each user role (e.g., admin + regular user)
-- Document test account credentials in this file (dev environments only — never in production)
-
-### Test accounts for preview environment
-| Email | Password | Role | Purpose |
-|-------|----------|------|---------|
-| dev@example.com | [set during seed] | admin | Full access testing |
-| user@example.com | [set during seed] | user | Standard user testing |
-
-> ⚠️ These accounts are for the preview environment only. Production should never have seeded test accounts.
+4. Monitor Vercel deployment logs and Supabase dashboard for first 30 minutes
 
 ## Troubleshooting
 
-**"Cannot connect to Supabase"**
-→ Check `.env.local` has correct URL and keys from your Preview project
-
-**"Migration failed"**
-→ Check the SQL syntax in `supabase/migrations/`. Run against Preview project first.
-
-**"Build fails on Vercel but works locally"**
-→ Check Vercel environment variables match what's in `.env.local`
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| Browser SSL warning on localhost | Self-signed cert from `--experimental-https` | Accept the warning once; it persists for the browser session |
+| Azure AD redirect error | Redirect URI not registered | Add `https://localhost:3003/auth/callback` to Azure App Registration |
+| "Cannot connect to Supabase" | Docker not running or `supabase start` not run | Start Docker Desktop, then `supabase start` |
+| "Migration failed" | SQL syntax error in migration file | Check `supabase/migrations/` — run `supabase db reset` to retry from scratch |
+| Build fails on Vercel but works locally | Missing env var in Vercel dashboard | Check all variables in the Environment Variable Reference table above are set |
+| Email links expired | Token >48 hours old or already used | Approver should log in directly to `/approvals` to action the request |

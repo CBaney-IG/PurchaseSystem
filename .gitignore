@@ -45,3 +45,8 @@ next-env.d.ts
 
 # Testing
 coverage/
+
+# Source specification documents (large binary files — keep locally, not in repo)
+*.pdf
+*.docx
+*.doc

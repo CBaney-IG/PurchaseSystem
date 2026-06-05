@@ -1,92 +1,96 @@
 # Tech Stack
 
 > **This is the single source of truth for technology choices.**
-> All other docs reference this file. When swapping a technology, update HERE first, then follow the migration checklist at the bottom.
+> Stack confirmed during `/init-architecture` (June 2026). Marked as FIXED in PRD — no deviation without explicit ADR.
 
 ## Current Stack
 
 | Layer | Technology | Version | Purpose | Swap Difficulty |
-|-------|-----------|---------|---------|-----------------|
-| **Framework** | Next.js | 14+ (App Router) | React framework with SSR, routing, API routes | Medium |
-| **Language** | TypeScript | 5+ (strict mode) | Type safety across frontend and backend | Low (config only) |
-| **Database** | Supabase | Latest | Managed PostgreSQL + Auth + RLS | Medium (see guide) |
-| **Hosting** | Vercel | — | Auto-deploy, preview environments, edge network | Low (see guide) |
-| **Styling** | Tailwind CSS | 3+ | Utility-first CSS framework | Low |
-| **Auth** | Supabase Auth | — | Email/password + OAuth, session management | Medium |
-| **Testing (unit)** | Vitest | Latest | Fast unit/integration tests, Jest-compatible | Low |
-| **Testing (e2e)** | Playwright | Latest | Browser-based end-to-end tests | Low |
-| **Validation** | Zod | Latest | Runtime type validation for forms and APIs | Low |
+|---|---|---|---|---|
+| **Framework** | Next.js | 15 (App Router) | React server components, API routes, middleware, Server Actions | Medium |
+| **Language** | TypeScript | 5+ (strict mode) | Type safety across all layers | Low (config only) |
+| **Database** | Supabase | Latest hosted | PostgreSQL 15 + RLS + Auth + Storage + Edge Functions + DB Webhooks | Medium (see guide) |
+| **Hosting** | Vercel Pro | — | Auto-deploy, preview environments, edge network | Low (see guide) |
+| **UI Library** | shadcn/ui | Latest | Accessible Radix UI primitives; composable components | Low |
+| **Styling** | Tailwind CSS | v4 | Utility-first CSS; Slate base colour; CSS variables for theming | Low |
+| **Auth** | Supabase Auth + Azure AD | — | OAuth2 SSO via Microsoft Entra ID. Email/password **disabled**. | Medium |
+| **Email** | Resend | Latest | Transactional email; approval notifications to non-platform users | Low |
+| **Email templates** | React Email | Latest | React-based responsive HTML email templates | Low |
+| **JWT signing** | jose | Latest | HMAC-SHA256 email action tokens | Low |
+| **Server state** | TanStack React Query | v5 | Cache, optimistic updates, invalidation for server state | Low |
+| **Forms** | React Hook Form | Latest | Performant form state management | Low |
+| **Validation** | Zod | Latest | Runtime type validation; shared client + server schemas | Low |
+| **Containerisation** | Docker + Docker Compose | Latest | Local dev environment; reproducible setup | Low |
+| **Source control** | GitHub | — | Main branch protected; feature branch workflow | — |
+| **CI/CD** | GitHub Actions | — | Type-check, lint, test on every PR; deploy to Vercel on main merge | Low |
+| **Testing (unit)** | Vitest | Latest | Fast unit tests; Jest-compatible syntax | Low |
+| **Testing (e2e)** | Playwright | Latest | Browser-based E2E against staging environment | Low |
 | **Linting** | ESLint + Prettier | Latest | Code style and formatting | Low |
 
 ## Why These Choices
 
-**Next.js** — App Router provides server components (less client JS), built-in API routes (no separate backend needed for MVP), and file-based routing (intuitive structure). Widely supported and well-documented.
+**Next.js 15 (App Router)** — Server Components reduce client JavaScript; built-in API routes handle webhooks and email actions without a separate backend; Server Actions replace bespoke form POST handlers. The `(dashboard)` route group enables a shared auth-protected layout. Fixed per BRS-USMP-001 §10.1.
 
-**Supabase over raw PostgreSQL** — Managed hosting, built-in auth, Row Level Security, and a dashboard for non-technical team members. All data access is isolated in `src/lib/data/` so the client can be swapped without touching UI code. Migrations are plain SQL.
+**Supabase** — Managed PostgreSQL with Row Level Security enforced at the database layer (cannot be bypassed by application bugs); built-in Azure AD OAuth2 support; Storage for receipt uploads; Edge Functions for scheduled jobs (auto-escalation, Snowflake sync); Database Webhooks for the Snowflake integration event pipeline. All Supabase calls isolated in `src/lib/supabase/` and `src/lib/data/` — the client can be swapped without touching UI components.
 
-**Vercel over self-hosting** — Zero-config Next.js deployment, automatic preview URLs for every PR (our "preview" environment), and instant rollback. No Docker or server management needed for MVP.
+**Azure AD SSO only** — Azure AD is the Group's single identity provider. No separate password system reduces credential attack surface and onboarding friction for 4,000 staff. Fixed per BRS-USMP-001 §10.2.
 
-**TypeScript strict mode** — Catches bugs at compile time. Strict mode prevents loose typing that causes runtime errors. Non-negotiable for quality.
+**shadcn/ui + Tailwind CSS v4** — Accessible Radix UI primitives with full keyboard/screen-reader support (WCAG 2.1 AA target); no heavy bundle since only used components are included; Slate base colour matches the professional governance tool tone; CSS variables allow consistent theming without custom CSS.
 
-**Tailwind over CSS modules/styled-components** — Utility classes keep styles colocated with markup, no naming debates, small bundle size. Trade-off: HTML can look busy, but readability improves with component extraction.
+**Resend** — Reliable transactional email with a generous free tier; first-class React Email integration; emails must reach recipients who have no platform account (approval links), which rules out Supabase's built-in email for this use case.
 
-**Vitest over Jest** — Faster, native TypeScript support, compatible with Jest syntax so migration is trivial if needed.
+**React Query v5** — Server state management with automatic background refetch, optimistic updates for approval actions, and fine-grained cache invalidation. Avoids prop-drilling for shared state like notification counts.
 
-**Zod** — Runtime validation that generates TypeScript types. Use for form inputs, API request/response validation, and environment variable checking. Single library for all validation needs.
+**jose** — Lightweight, standards-compliant JWT library for the HMAC-SHA256 email action tokens; no dependency on Node's `crypto` module (works in Edge runtime).
+
+**Vitest + Playwright** — Vitest is faster than Jest with native TypeScript; `processApproval()` and token logic require 100% unit test coverage (FRS §11.1). Playwright tests the 7 E2E scenarios in FRS §11.2 against the staging environment.
+
+**Docker + Docker Compose** — All environments (dev, staging, production) must be reproducible per BRS §10.1. Local dev runs `supabase start` + Next.js dev server; the Dockerfile produces the production build for Vercel.
+
+## Local Development URL
+
+```
+https://localhost:3003
+```
+
+Start with: `next dev --experimental-https --port 3003`
+The `--experimental-https` flag generates a self-signed certificate for local HTTPS (required to match the Azure AD redirect URI configuration).
 
 ## Swap Guides
 
 ### Swapping Supabase → Raw PostgreSQL + Custom Auth
 
-**Effort:** ~1-2 days for a small app
-**What changes:**
-1. Replace Supabase client in `src/lib/supabase/` with a PostgreSQL client (e.g., `pg`, Drizzle ORM, or Prisma)
-2. Replace all functions in `src/lib/data/` to use the new client (interfaces stay the same)
-3. Replace Supabase Auth with your chosen auth provider (NextAuth.js, Lucia, Clerk, etc.)
-4. Migrations in `supabase/migrations/` are plain SQL — run directly on any PostgreSQL instance
-5. RLS policies are standard PostgreSQL — they work on any PostgreSQL database
-6. Update environment variables in `.env.example` and Vercel dashboard
+**Effort:** ~2 days
+1. Replace Supabase clients in `src/lib/supabase/` with `pg` or Drizzle ORM
+2. Replace all data functions in `src/lib/data/` (interfaces stay the same — UI unchanged)
+3. Replace Supabase Auth with NextAuth.js or Lucia (keep Azure AD as OAuth provider)
+4. Migrations in `supabase/migrations/` are plain SQL — run directly on any PostgreSQL 15+ instance
+5. RLS policies are standard PostgreSQL — keep them or replace with application-level middleware
+6. Replace Supabase Storage with S3-compatible storage (e.g. Cloudflare R2)
+7. Replace Edge Functions with Vercel Cron Jobs or equivalent
 
-**What doesn't change:** UI components, pages, hooks, API contracts, tests (if mocking data layer)
+**What doesn't change:** All UI components, API route shapes, email templates, Playwright tests
 
 ### Swapping Vercel → Other Hosting
 
-**Effort:** ~Half a day
-**What changes:**
-1. Add a `Dockerfile` or platform-specific config (e.g., `fly.toml` for Fly.io)
-2. Replace Vercel preview deploys with your CI/CD pipeline's preview mechanism
-3. Move environment variables to your new platform's secret management
-4. Update `docs/development/environments.md` and `docs/development/git-workflow.md`
+**Effort:** ~half a day
+1. Add `Dockerfile` (already present) — tag and push to your container registry
+2. Replace Vercel preview deploys with your CI pipeline's preview mechanism
+3. Move environment variables to your platform's secret management
+4. Remove `@vercel/analytics` if added
 
-**What doesn't change:** All application code, database, auth, tests
+### Swapping Next.js → SvelteKit or Remix
 
-**Vercel-specific features to watch for:**
-- `next.config.js` → `images.remotePatterns` (Vercel optimizes images; other hosts need `next/image` loader config)
-- Edge middleware (if used) → may need adaptation for Node.js runtime
-- Analytics/Speed Insights (if added) → remove or replace
+**Effort:** ~4 days (routing is the main work)
+- Routing: `src/app/` → framework-specific file conventions
+- Server Components → framework-specific server-side rendering
+- Server Actions → `form action` handlers or API endpoints
+- `src/components/`, `src/lib/`, `src/types/` mostly unchanged
 
-### Swapping Next.js → Another React Framework
+## Adding New Dependencies
 
-**Effort:** ~3-5 days for a small app (most work is routing)
-**What changes:**
-1. Routing structure (`src/app/` → framework-specific routing)
-2. Server components → standard React components with data fetching
-3. Server actions → API endpoints
-4. `next.config.js` → framework-specific config
-
-**What doesn't change:** `src/components/`, `src/lib/`, `src/hooks/`, all data access, database, tests (mostly)
-
-### Swapping Tailwind → Another Styling Approach
-
-**Effort:** Proportional to number of components
-**What changes:** All className attributes in components
-**What doesn't change:** Everything else
-
-## Adding New Technologies
-
-Before adding a new dependency, check:
-1. Is there an existing dependency that already does this? (see `package.json`)
-2. Is it actively maintained? (last commit within 6 months, open issues addressed)
-3. What's the bundle size impact? (check on [bundlephobia.com](https://bundlephobia.com))
-4. Does it have TypeScript types? (required)
-5. Document the addition: update this file and create an ADR if it's a significant choice
+Before adding any new package:
+1. Check if an existing dependency already covers the need
+2. Last commit within 6 months; TypeScript types included
+3. Check bundle size at bundlephobia.com for client-side packages
+4. Document here and create an ADR if it is a significant architectural choice

@@ -1,0 +1,56 @@
+# Purchase System — Docker Compose
+# https://github.com/CBaney-IG/PurchaseSystem
+#
+# Usage:
+#   Local dev (recommended):  supabase start  +  npm run dev
+#   Full container test:       docker compose up --build
+#
+# Note: HTTPS (required for Azure AD OAuth) is handled by Vercel in
+# production and by next dev --experimental-https for local dev.
+# This compose file runs the app on HTTP port 3003 — suitable for
+# testing the production build locally but not for Azure AD SSO testing.
+
+version: '3.8'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: purchase-system-app
+    ports:
+      - '3003:3000'       # Host 3003 → container 3000
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Local PostgreSQL for running the full stack without supabase start.
+  # For normal local development, use `supabase start` instead (port 54321).
+  supabase-db:
+    image: supabase/postgres:15.1.0.147
+    container_name: purchase-system-db
+    ports:
+      - '54322:5432'      # Separate port from supabase start (54321) to avoid conflicts
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+    volumes:
+      - purchase_system_db:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d  # auto-run migrations on first start
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  purchase_system_db:
+    driver: local
