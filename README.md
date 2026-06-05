@@ -1,204 +1,240 @@
-# [PROJECT_NAME]
+# Purchase System — Unified Spend Management Platform
 
-> [One-line product description — update after running `/init-product`]
+> A governed, auditable spend management platform replacing email-based procurement approvals across BPO Group with a configurable multi-level approval engine and real-time spend intelligence.
+
+**Repo:** https://github.com/CBaney-IG/PurchaseSystem
+**Local dev:** https://localhost:3003
+**Stack:** Next.js 15 · Supabase (PostgreSQL 15 + RLS) · Azure AD SSO · shadcn/ui · Tailwind CSS v4 · Vercel Pro
+
+---
 
 ## Prerequisites
 
-Before you begin, make sure you have these installed on your machine:
+| Tool | Version | Install |
+|---|---|---|
+| Node.js | v20 LTS | [nodejs.org](https://nodejs.org/) |
+| npm | v10+ | Comes with Node.js |
+| Git | v2.40+ | [git-scm.com](https://git-scm.com/) |
+| Docker Desktop | v4.30+ | [docker.com](https://www.docker.com/products/docker-desktop/) |
+| Supabase CLI | v1.200+ | `npm install -g supabase` |
+| Vercel CLI | Latest | `npm install -g vercel` |
+| VS Code | Latest | [code.visualstudio.com](https://code.visualstudio.com/) |
 
-1. **A code editor** — [VS Code](https://code.visualstudio.com/) recommended (has a Claude Code extension)
-2. **Node.js 18+** — download from [nodejs.org](https://nodejs.org/) (LTS version recommended)
-   - To check: run `node --version` in your terminal
-3. **Git** — download from [git-scm.com](https://git-scm.com/)
-   - To check: run `git --version` in your terminal
-4. **Claude Code** — install with `npm install -g @anthropic-ai/claude-code`
-   - Requires a Claude Pro, Max, or API subscription
+**Accounts needed:** GitHub · [Supabase](https://supabase.com) · [Vercel](https://vercel.com) · [Resend](https://resend.com)
+**Credentials needed from IT Director:** Azure AD tenant ID, client ID, client secret
 
-You'll also need free accounts on:
-- [Supabase](https://supabase.com) — database and authentication
-- [Vercel](https://vercel.com) — hosting and preview deployments
-- [GitHub](https://github.com) — code repository
+---
 
-## Getting Started (Step by Step)
-
-> **About the template:** This repository is a **scaffolding kit**, not a runnable app. There's no `package.json`, no `src/`, and no database migrations yet — those are created during scaffolding (Step 7 below). The default stack is Next.js + Supabase + Vercel, but you can customize it during `/init-architecture`. See [docs/architecture/tech-stack.md](docs/architecture/tech-stack.md) for swap guides.
-
-### Step 1: Get the template into a new repository
-
-Pick **one** of the two approaches below. Approach A is recommended — it gives you a clean new repo on GitHub with no link to the template's history.
-
-#### Approach A — GitHub "Use this template" _(recommended)_
-
-1. On GitHub, open the template: **[claude-code-project-template](https://github.com/adamstockdenIG/claude-code-project-template)**.
-2. Click **"Use this template"** → **"Create a new repository"**, name it, set visibility, and create.
-3. Clone *your new repo* (not the template) to your machine:
-   ```bash
-   git clone https://github.com/[your-username]/[your-repo].git
-   cd [your-repo]
-   ```
-
-✅ You now have all the template files locally, in a fresh repo with one initial commit. **Skip to Step 2.**
-
-#### Approach B — Clone and detach _(no GitHub, or you want a different host)_
+## Quick Start (local dev)
 
 ```bash
-# 1. Clone the template
-git clone https://github.com/adamstockdenIG/claude-code-project-template.git my-project
-cd my-project
+# 1. Clone
+git clone https://github.com/CBaney-IG/PurchaseSystem.git
+cd PurchaseSystem
 
-# 2. Detach from the template's git history and start a fresh one
-rm -rf .git          # Windows PowerShell: Remove-Item -Recurse -Force .git
-git init
-git add -A
-git commit -m "chore: initial project template"
-
-# 3. (Optional, when you have a remote ready) push to your own repo:
-# git remote add origin [your-repo-url]
-# git push -u origin main
-```
-
-✅ You now have all the template files locally, in a fresh repo with one initial commit and no remote linked yet.
-
-### Step 2: Open the project in VS Code
-
-Open the project folder: `File → Open Folder…` (or run `code .` from the terminal).
-
-> **💡 Tip — use VS Code's integrated terminal.** Open it with `` Ctrl+` `` (Windows/Linux) or `` Cmd+` `` (macOS). Every terminal command below can run inside it, so you stay in one window: editing files, running commands, and chatting with Claude Code.
-
-### Step 3: Open Claude Code
-
-You have two ways to interact with Claude Code — both work identically and use the same slash commands. **VS Code is recommended** because it auto-includes any file you have open as context.
-
-**Option A — VS Code panel (recommended):**
-- Open the Claude Code panel: `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS) → type **"Claude Code: Open"** and press Enter.
-- Or click the Claude Code icon in the VS Code activity bar (left sidebar).
-- Type slash commands or natural-language prompts directly in the panel.
-
-**Option B — Terminal:**
-- In your terminal (or VS Code's integrated terminal), run `claude` from the project folder.
-- Type slash commands at the prompt.
-
-Either way, Claude reads [CLAUDE.md](CLAUDE.md) at session start and knows your project context.
-
-### Step 4: Define the product (~10 minutes)
-```
-/init-product
-```
-Plan-mode interview. Captures product overview, personas, user journeys, and success metrics. Generates [docs/product/PRD.md](docs/product/PRD.md), [docs/product/user-stories.md](docs/product/user-stories.md), and [docs/development/backlog.md](docs/development/backlog.md). You'll review the drafts before any file is written.
-
-### Step 5: Capture design direction (optional, ~5 minutes)
-```
-/init-design-system
-```
-Plan-mode interview covering brand voice, visual direction, and interaction principles. Generates [docs/product/design-system.md](docs/product/design-system.md). Skip this if you'd rather decide design as you build — there's no penalty for deferring, and you can run it later.
-
-### Step 6: Design the architecture (~15 minutes) — _the stack is chosen here_
-```
-/init-architecture
-```
-Designs schema, API contracts, security model, and component-library choice based on your PRD (and design-system, if you ran it). Refines user stories with technical acceptance criteria. Generates the docs under [docs/architecture/](docs/architecture/).
-
-> **The default stack is Next.js + Supabase + Vercel.** If your project needs a different stack (e.g. Postgres on Fly.io instead of Supabase, or SvelteKit instead of Next.js), say so during this step — the architecture proposal will reflect your choice and [docs/architecture/tech-stack.md](docs/architecture/tech-stack.md) will be updated. The remaining setup steps below assume the default stack; **adapt them to whatever architecture chose**.
-
-### Step 7: Scaffold the project — `/new-feature F-001`
-```
-/new-feature F-001
-```
-This is the first backlog item: "Project scaffolding". Claude creates a branch, scaffolds the chosen stack (creates `package.json`, `src/`, configuration files, and — for the default stack — `supabase/migrations/`, `.env.example`, etc.), and walks you through the setup.
-
-**After F-001 is committed and merged, the project is a real, runnable app.** From here on, `npm` commands work and the remaining setup steps make sense.
-
-### Step 8: Create your Supabase projects _(only if architecture chose Supabase)_
-1. Go to [supabase.com/dashboard](https://supabase.com/dashboard)
-2. Create two projects (free tier is fine):
-   - **[your-project]-preview** — for development and testing
-   - **[your-project]-production** — for live users (can create later)
-3. For each project, go to Settings → API Keys and note the **Project URL**, **publishable key**, and **secret key**
-
-> **Legacy naming note:** Older Supabase docs and tutorials refer to the **anon key** (now called the **publishable key**) and the **service_role key** (now called the **secret key**) — they map 1:1, so anywhere older guides say "anon key", use the publishable key, and anywhere they say "service_role key", use the secret key.
-
-### Step 9: Set up environment variables _(adapt to your chosen stack)_
-```bash
-cp .env.example .env.local
-```
-Open `.env.local` and fill in your **preview** project credentials. For the default Supabase stack:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://[your-preview-project].supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[your-preview-publishable-key]
-SUPABASE_SECRET_KEY=[your-preview-secret-key]
-```
-
-### Step 10: Install dependencies and start
-```bash
+# 2. Install dependencies (after F-001 scaffolding)
 npm install
+
+# 3. Start local Supabase (requires Docker Desktop running)
+supabase start
+# Copy the anon key and service key from the output → paste into .env.local
+
+# 4. Set up environment variables
+cp .env.example .env.local
+# Fill in .env.local — see Environment Variables section below
+
+# 5. Apply database migrations
+supabase db reset
+
+# 6. Start the dev server (HTTPS required for Azure AD)
 npm run dev
+# Runs: next dev --experimental-https --port 3003
 ```
-Open [http://localhost:3000](http://localhost:3000).
 
-### Step 11: Connect to Vercel _(only if architecture chose Vercel)_
+Open **https://localhost:3003** — accept the self-signed certificate warning on first run.
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in each value:
+
+| Variable | Description | Where to get it |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | `supabase start` output |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (safe for browser) | `supabase start` output |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — **server only** | `supabase start` output |
+| `AZURE_AD_TENANT_ID` | Azure AD tenant ID | IT Director |
+| `AZURE_AD_CLIENT_ID` | Azure AD app client ID | IT Director |
+| `AZURE_AD_CLIENT_SECRET` | Azure AD app client secret | IT Director |
+| `RESEND_API_KEY` | Resend API key for email | [resend.com](https://resend.com) |
+| `RESEND_FROM_EMAIL` | From address for notifications | e.g. `noreply@bpogroup.co.za` |
+| `EMAIL_ACTION_SECRET` | HMAC key for approval email tokens | `openssl rand -hex 32` |
+| `SNOWFLAKE_WEBHOOK_SECRET` | Shared secret for Supabase → USMP webhook | `openssl rand -hex 32` |
+| `SNOWFLAKE_ENDPOINT_URL` | Snowflake pipeline endpoint | Data team |
+| `NEXT_PUBLIC_APP_URL` | Full URL of this environment | `https://localhost:3003` (local) |
+
+> ⚠️ Never commit `.env.local` — it is gitignored. Production secrets live in the Vercel dashboard.
+
+---
+
+## Deploying to Vercel
+
+### First-time setup
+
 ```bash
-npx vercel link
+# 1. Authenticate with Vercel via your GitHub account
+vercel login
+
+# 2. Link this project (run from the project root)
+vercel
+
+# When prompted:
+#   Set up and deploy? → Yes
+#   Which scope? → select your account or org
+#   Link to existing project? → No (first time)
+#   Project name → purchase-system
+#   In which directory is your code? → ./
 ```
-In the [Vercel dashboard](https://vercel.com/dashboard), set environment variables:
-- **Preview** environment → your preview Supabase credentials
-- **Production** environment → your production Supabase credentials
 
-### Step 12: Build the rest of the backlog
+After linking, note your IDs — needed for GitHub Actions CI/CD:
+
+```bash
+cat .vercel/project.json
+# { "orgId": "team_xxxx", "projectId": "prj_xxxx" }
 ```
-/new-feature F-002
+
+### Set environment variables in Vercel
+
+**[vercel.com/dashboard](https://vercel.com/dashboard) → purchase-system → Settings → Environment Variables**
+
+Add every variable from the table above. For environment-specific values:
+
+| Variable | Preview value | Production value |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Staging Supabase URL | Production Supabase URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Staging anon key | Production anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Staging service role key | Production service role key |
+| `NEXT_PUBLIC_APP_URL` | `https://purchase-system-git-main.vercel.app` | Your production domain |
+| All others | Same across environments | Same across environments |
+
+### Add GitHub Actions secrets
+
+**[github.com/CBaney-IG/PurchaseSystem/settings/secrets/actions](https://github.com/CBaney-IG/PurchaseSystem/settings/secrets/actions)**
+
+| Secret name | Value |
+|---|---|
+| `VERCEL_TOKEN` | Vercel → Account Settings → Tokens → Create |
+| `VERCEL_ORG_ID` | `orgId` from `.vercel/project.json` |
+| `VERCEL_PROJECT_ID` | `projectId` from `.vercel/project.json` |
+
+### Deployment flow
+
 ```
-Continue with F-002, F-003, etc. via `/new-feature [F-XXX]`. See "Working with Claude Code" below for the full feature loop.
+Push to any branch  →  Vercel creates a preview URL automatically
+PR opened           →  GitHub Actions: type-check → lint → tests → Vercel preview
+Merge to main       →  GitHub Actions: type-check → lint → tests → Vercel production deploy
+```
 
-## Working with Claude Code
+### Manual deploy (without CI)
 
-This project is set up for agentic development. Every session, Claude reads `CLAUDE.md` and knows your project context. Commands are grouped by lifecycle phase:
+```bash
+vercel                  # deploy to preview
+vercel --prod           # deploy to production
+```
 
-### Setup (one-time, when starting a new project)
-| Command | When to Use |
-|---------|-------------|
-| `/init-product` | Phase 1 — plan-mode interview that produces PRD, user stories, backlog |
-| `/init-design-system` _(optional)_ | Between phase 1 and 2 — capture visual direction and interaction principles |
-| `/init-architecture` | Phase 2 — design schema, API contracts, security model from the PRD |
+---
 
-### Day-to-day (every feature)
-| Command | When to Use |
-|---------|-------------|
-| `/project-status` | Start of any new session — get oriented |
-| `/new-feature [F-XXX]` | Begin work on a backlog item (creates branch, loads context) |
-| `/validate` | Check work against product, architecture, and security requirements |
-| `/commit-feature` | Wrap up, update docs, and commit |
-| `/hotfix [issue]` | Urgent production fix (skips the new-feature ceremony) |
+## Development Workflow
 
-**The three-phase view:**
+```bash
+npm run dev          # Local dev server (https://localhost:3003)
+npm run build        # Production build
+npm run lint         # ESLint + Prettier
+npm run type-check   # TypeScript strict check
+npm run test         # Vitest unit tests
+npm run test:e2e     # Playwright end-to-end tests
+npm run db:migrate   # Run pending Supabase migrations
+npm run db:reset     # Reset local DB and re-seed
+```
 
-1. **Discovery** — `init-product` (and optionally `init-design-system`)
-2. **Architecture** — `init-architecture`
-3. **Feature development (per feature)** — `project-status` → `new-feature` → develop → `validate` → fix → `validate` → `commit-feature` → push + PR
+**Feature loop:**
+1. `/project-status` — orient at the start of every session
+2. `/new-feature F-XXX` — create branch and load context
+3. Develop → `/validate` — check against PRD, architecture, security
+4. `/commit-feature` — update docs and commit
+5. Push → open PR → Vercel preview → merge to main
+
+---
+
+## Docker
+
+```bash
+# Build and run the full stack (app + local Postgres)
+docker compose up --build
+
+# App runs at http://localhost:3003
+```
+
+> For day-to-day development, `supabase start` + `npm run dev` is the recommended approach. Docker compose is useful for testing the production build locally or running in a CI environment without Supabase CLI.
+
+The `docker/Dockerfile` uses a multi-stage build (deps → builder → lean runner on `node:20-alpine`).
+
+---
+
+## Project Structure
+
+> This structure is created during F-001 (project scaffolding). Until F-001 is run, only `docs/`, `docker/`, and root config files exist.
+
+```
+app/              # Next.js App Router — pages and API routes
+  (auth)/         # Login + OAuth callback
+  (dashboard)/    # All protected routes (requests, approvals, admin)
+  api/            # API routes (approvals, webhooks, admin)
+components/       # shadcn/ui components + feature components
+lib/
+  supabase/       # Browser, server, and service-role clients
+  approvals/      # processApproval() — core approval routing engine
+  notifications/  # Email token signing + Resend helpers
+  snowflake/      # Webhook retry logic
+hooks/            # Custom React hooks
+types/            # TypeScript domain types + Zod schemas
+emails/           # React Email templates
+supabase/
+  migrations/     # SQL migration files
+  seed/           # Development seed data
+docker/           # Dockerfile
+docs/             # Architecture, product, and development documentation
+.github/
+  workflows/      # GitHub Actions CI/CD
+```
+
+---
 
 ## Documentation
 
 | Doc | Purpose |
-|-----|---------|
-| [CLAUDE.md](CLAUDE.md) | Instructions Claude reads at the start of every session |
-| [Tech Stack](docs/architecture/tech-stack.md) | Current technology choices and swap guides |
-| [PRD](docs/product/PRD.md) | What we're building and why |
-| [User Stories](docs/product/user-stories.md) | Per-feature stories with acceptance criteria |
-| [Design System](docs/product/design-system.md) | Visual direction, brand voice, interaction principles _(optional)_ |
-| [Architecture](docs/architecture/overview.md) | How the system is designed |
-| [Database](docs/architecture/database.md) | Data model and schema |
-| [API Contracts](docs/architecture/api-contracts.md) | Endpoint specifications |
-| [Security](docs/architecture/security.md) | Security requirements (ISO 27001 aligned) |
-| [Backlog](docs/development/backlog.md) | Feature list with priorities, phases, dependencies |
+|---|---|
+| [PRD](docs/product/PRD.md) | Product requirements, user personas, success metrics |
+| [User Stories](docs/product/user-stories.md) | Feature stories with acceptance criteria (AC-01–AC-10) |
+| [Architecture Overview](docs/architecture/overview.md) | System diagram, data flow, auth flow |
+| [Database Schema](docs/architecture/database.md) | All 13 tables with full SQL and RLS policies |
+| [API Contracts](docs/architecture/api-contracts.md) | Every endpoint, Server Action, and webhook spec |
+| [Security](docs/architecture/security.md) | Auth, entity isolation, POPIA, ISO 27001 mapping |
+| [Tech Stack](docs/architecture/tech-stack.md) | Stack decisions, rationale, and swap guides |
+| [ADR-001](docs/architecture/decisions/001-initial-stack.md) | Initial stack decision record |
+| [Feature Backlog](docs/development/backlog.md) | 20 features across 7 phases (~40 dev days) |
 | [Current Phase](docs/development/current-phase.md) | What's in progress and what's next |
-| [Git Workflow](docs/development/git-workflow.md) | Branching, commits, and rollback |
-| [Environments](docs/development/environments.md) | Dev / preview / production setup |
+| [Environments](docs/development/environments.md) | Full local, staging, and production setup guide |
+| [Git Workflow](docs/development/git-workflow.md) | Branching strategy and commit conventions |
 
-## Tech Stack
+---
 
-See [docs/architecture/tech-stack.md](docs/architecture/tech-stack.md) for full details and swap guides.
+## Key Constraints
 
-Current defaults: Next.js 14+ (App Router), TypeScript (strict), Supabase (PostgreSQL + Auth), Vercel (hosting), Tailwind CSS (styling), Vitest (unit tests), Playwright (e2e tests), Zod (validation).
-
-## License
-
-[Choose a license]
+- **Auth:** Azure AD SSO only — email/password is disabled in Supabase Auth
+- **Stack:** Fixed per PRD — Next.js 15, Supabase, Vercel Pro (see ADR-001 for rationale)
+- **No third-party approval SaaS:** No ApprovalMax, Expensify, or equivalent
+- **Snowflake:** REST/webhook integration only — no direct database connector
+- **Compliance:** POPIA (South Africa) + ISO 27001 alignment
+- **Currency:** ZAR default

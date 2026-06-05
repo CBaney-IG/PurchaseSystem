@@ -134,14 +134,86 @@ The seed creates:
 
 ## Vercel Setup (first-time)
 
+### 1. Authenticate and link
+
 ```bash
-vercel login   # authenticate with GitHub
-vercel         # link project (select org and project name)
+# Install the CLI if not already installed
+npm install -g vercel
+
+# Authenticate using your GitHub account
+vercel login
+
+# Link the project (run from the PurchaseSystem root)
+vercel
 ```
 
-In Vercel dashboard > Project > Settings > Environment Variables:
-- **Preview:** Staging Supabase credentials + `NEXT_PUBLIC_APP_URL=<vercel-preview-url>`
-- **Production:** Production Supabase credentials + `NEXT_PUBLIC_APP_URL=<production-url>`
+When prompted:
+- **Set up and deploy?** → Yes
+- **Which scope?** → select your Vercel account or team
+- **Link to existing project?** → No (first time)
+- **Project name** → `purchase-system`
+- **In which directory is your code?** → `./`
+
+Vercel will do a first deployment to a preview URL. Ignore the output URL for now.
+
+### 2. Get your project IDs (needed for GitHub Actions)
+
+```bash
+cat .vercel/project.json
+# Output: { "orgId": "team_xxxx", "projectId": "prj_xxxx" }
+```
+
+Add these to GitHub Secrets at
+`https://github.com/CBaney-IG/PurchaseSystem/settings/secrets/actions`:
+
+| Secret name | Value |
+|---|---|
+| `VERCEL_TOKEN` | Vercel → Account Settings → Tokens → Create token |
+| `VERCEL_ORG_ID` | `orgId` from `.vercel/project.json` |
+| `VERCEL_PROJECT_ID` | `projectId` from `.vercel/project.json` |
+
+### 3. Set environment variables in the Vercel dashboard
+
+**vercel.com/dashboard → purchase-system → Settings → Environment Variables**
+
+Add each variable from the Environment Variable Reference table above.
+Split environment-specific values across Preview and Production:
+
+| Variable | Preview | Production |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Staging Supabase URL | Production Supabase URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Staging anon key | Production anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Staging service role key | Production service role key |
+| `NEXT_PUBLIC_APP_URL` | `https://purchase-system-git-main.vercel.app` | Your production domain |
+| All other variables | Same value in both | Same value in both |
+
+> **Note:** `SUPABASE_SERVICE_ROLE_KEY` bypasses Row Level Security. Use the **staging** key in Preview and the **production** key in Production — never mix them.
+
+### 4. Connect the GitHub repository
+
+**vercel.com → purchase-system → Settings → Git**
+
+- Connect repository: `CBaney-IG/PurchaseSystem`
+- Production branch: `main`
+- Vercel will now deploy automatically on every push
+
+### 5. Verify the deployment flow
+
+```
+Push any branch  →  Vercel creates a preview URL
+Open a PR        →  GitHub Actions runs tests  →  Vercel posts preview URL to PR
+Merge to main    →  GitHub Actions runs tests  →  Vercel deploys to production
+```
+
+The CI pipeline is defined in `.github/workflows/deploy.yml`.
+The `test` job (type-check → lint → unit tests) must pass before deployment runs.
+
+### Manual deploy (bypass CI)
+
+```bash
+vercel            # deploy current code to a preview URL
+vercel --prod     # deploy to production directly
+```
 
 ## Supabase Production Setup
 
