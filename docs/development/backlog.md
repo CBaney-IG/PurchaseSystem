@@ -21,7 +21,7 @@
 |----|---------|----------|--------|--------------|------|--------|-----------|
 | F-001 | Project scaffolding — Next.js 15, Supabase, Docker, Vercel, GitHub Actions CI/CD | P0 | ✅ | — | 1d | feature/F-001 | 2026-06-05 |
 | F-002 | Azure AD SSO authentication (Supabase Auth + OAuth2 + middleware route protection) | P0 | 📋 | F-001 | 1d | | |
-| F-003 | Full database schema + RLS policies + helper functions + triggers + indexes | P0 | 📋 | F-002 | 2d | | |
+| F-003 | Full database schema + RLS policies + helper functions + triggers + indexes | P0 | ✅ | F-002 | 2d | feature/F-003 | 2026-06-09 |
 | F-004 | User & entity management admin UI (create entities, invite users, assign roles, verify RLS) | P0 | 📋 | F-003 | 2d | | |
 
 ## Phase 2: Master Data & Core Forms
