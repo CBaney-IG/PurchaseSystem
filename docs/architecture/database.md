@@ -18,12 +18,12 @@
 
 ```
 supabase/migrations/
-  20260501000001_initial_schema.sql      # All 13 tables
-  20260501000002_rls_policies.sql        # All RLS policies
-  20260501000003_helper_functions.sql    # get_my_entity_id(), get_my_role()
-  20260501000004_triggers.sql            # updated_at trigger, handle_new_user trigger
-  20260501000005_indexes.sql             # Performance indexes
-  20260501000006_seed_categories.sql     # Default spend categories + DOA seed data
+  20260601000001_entities_profiles.sql   # entities, profiles, helper functions, handle_new_user trigger (F-001)
+  20260609000001_full_schema.sql         # Remaining 11 tables (F-003)
+  20260609000002_rls_policies.sql        # All RLS policies (F-003)
+  20260609000003_triggers.sql            # updated_at triggers for F-003 tables (F-003)
+  20260609000004_indexes.sql             # Performance indexes (F-003)
+  20260609000005_seed_categories.sql     # DEFAULT entity + DOA matrix seed data (F-003)
 ```
 
 ---
@@ -459,9 +459,9 @@ spend_requests 1─────────────────────�
 
 | Migration | Description | Date |
 |---|---|---|
-| 20260501000001_initial_schema.sql | All 13 tables | TBD |
-| 20260501000002_rls_policies.sql | All RLS policies | TBD |
-| 20260501000003_helper_functions.sql | get_my_entity_id(), get_my_role() | TBD |
-| 20260501000004_triggers.sql | updated_at + handle_new_user | TBD |
-| 20260501000005_indexes.sql | Performance indexes | TBD |
-| 20260501000006_seed_categories.sql | Default spend categories + DOA seed data | TBD |
+| 20260601000001_entities_profiles.sql | entities, profiles, helper functions, handle_new_user (F-001) | 2026-06-05 |
+| 20260609000001_full_schema.sql | Remaining 11 tables (F-003) | 2026-06-09 |
+| 20260609000002_rls_policies.sql | All RLS policies (F-003) | 2026-06-09 |
+| 20260609000003_triggers.sql | updated_at triggers for F-003 tables (F-003) | 2026-06-09 |
+| 20260609000004_indexes.sql | Performance indexes (F-003) | 2026-06-09 |
+| 20260609000005_seed_categories.sql | DEFAULT entity + DOA matrix seed data (F-003) | 2026-06-09 |
