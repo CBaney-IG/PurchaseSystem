@@ -8,6 +8,38 @@
 
 ---
 
+## Build Progress
+
+| Phase | Goal | Status |
+|---|---|---|
+| **Phase 1 — Foundation** | Scaffolding, full DB schema, admin UI | ✅ Complete (F-001, F-003, F-004) |
+| **Phase 2 — Master Data & Forms** | Vendor catalogue, budgets, cost centres, PR form, expense claims | ✅ Complete (F-005, F-006, F-007) |
+| **Phase 3 — Approval Engine & Inbox** | processApproval() state machine, approval API routes, inbox UI | 🔨 In progress (F-008 done, F-009/F-010 next) |
+| **Phase 4 — POs, Budget Engine & Dashboard** | PO generation, real-time budget tracking, unified dashboard | 📋 Backlog |
+| **Phase 5 — Integrations & Reporting** | Snowflake pipeline, audit PDF/CSV, auto-escalation | 📋 Backlog |
+| **Phase 6 — Nice-to-Have MVP** | Approval delegation, mobile PWA | 📋 Backlog |
+| **Phase 7 — UAT & Hardening** | Playwright E2E suite, stakeholder sign-off | 📋 Backlog |
+
+**Test coverage:** 164 unit tests passing across 11 suites.
+
+### What's been built
+
+**Authentication & data model** (F-001, F-003): Full Next.js 15 app scaffolded with Supabase, Docker, GitHub Actions CI/CD, and the complete 13-table schema with RLS policies, triggers, indexes, and seed data. Local dev runs on `https://localhost:3003` with email/password auth; Azure AD SSO is wired in F-002 (blocked on credentials from IT Director).
+
+**Admin self-service** (F-004, F-005): Entity and user management screens, vendor catalogue with CSV import, cost centre management, annual budget upload, and the DOA approval matrix configuration grid with inline editing and live "Simulate Approval Path" preview.
+
+**Purchase Requisition form** (F-006): Full PR form with all required and optional fields, real-time budget indicator, approval path preview before submission, draft save, multi-file attachment upload, and My Requests list with status tracking and detail view.
+
+**Expense Claim form** (F-007): Expense claim form with receipt upload (image preview + mobile camera capture), vendor + category + cost centre selection, R5k+ justification enforcement, same draft/submit pattern as PRs.
+
+**Approval engine** (F-008): `processApproval()` state machine handling approve, reject, request-info, and info-provided transitions with DOA matrix routing, immutable `approval_event` recording, and five API routes (`/approve`, `/reject`, `/request-info`, `/provide-info`, `/inbox`). Approver role + entity isolation enforced on every route.
+
+### What's next (F-009)
+
+Approver inbox UI — pending request list, request detail side drawer with full context and budget impact, approve/reject/request-info action buttons, and bulk approve for routine requests.
+
+---
+
 ## Prerequisites
 
 | Tool | Version | Install |

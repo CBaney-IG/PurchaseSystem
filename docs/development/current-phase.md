@@ -28,9 +28,8 @@
   - 164 tests passing across 11 suites; build clean (5 new routes)
 
 **What's next:**
-- F-008 branch ready to PR/merge (feature/F-008)
-- F-009 (Approver inbox UI) — READY to start once F-008 is merged
-- F-010 (Email notifications) — also depends on F-008; can run after F-009
+- F-009 (Approver inbox UI) — READY to start; F-008 merged to main
+- F-010 (Email notifications) — depends on F-008 ✅; can run after F-009
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
