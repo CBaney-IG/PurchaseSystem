@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   FileText,
   FilePlus,
+  Receipt,
   CheckSquare,
   ShoppingBag,
   PieChart,
@@ -18,6 +19,7 @@ import { createClient } from '@/lib/supabase/client'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/requests/new', label: 'New Request', icon: FilePlus },
+  { href: '/expenses/new', label: 'New Expense', icon: Receipt },
   { href: '/requests', label: 'My Requests', icon: FileText },
   { href: '/approvals', label: 'Approvals', icon: CheckSquare },
   { href: '/purchase-orders', label: 'Purchase Orders', icon: ShoppingBag },
