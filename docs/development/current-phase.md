@@ -17,19 +17,18 @@
 
 **Date:** 2026-06-10
 **What was done:**
-- F-006 complete: Purchase Requisition form
-  - `supabase/migrations/20260610000002_storage_attachments.sql` — private `attachments` bucket + authenticated-read RLS policy
-  - `lib/ref-number.ts` + `lib/ref-number.test.ts` — sequential PR-YYYY-NNNNN / EXP-YYYY-NNNNN generation (6 tests)
-  - `lib/data/spend-requests.ts` — createDraft, updateDraft, submitRequest, listMyRequests, getRequest, cancelRequest, getBudgetPosition, uploadAttachment
-  - `lib/data/spend-requests.test.ts` — 19 Zod schema + ref-number formatting tests
-  - API routes: `GET+POST /api/requests`, `GET /api/requests/budget`, `GET+PATCH+DELETE /api/requests/[id]`, `POST /api/requests/[id]/submit`, `POST /api/requests/[id]/attachments`
-  - Components: RequestStatusBadge, BudgetIndicator, ApprovalPathPreview, FileUpload, VendorCombobox (shadcn Command+Popover), PRForm
-  - Pages: `/requests/new`, `/requests` (My Requests list), `/requests/[id]` (detail + approval timeline)
-  - 116 tests passing across 9 suites; build clean
+- F-007 complete: Expense Claim form
+  - `components/expenses/ReceiptUpload.tsx` — single-file receipt upload with image preview (JPG/PNG) and PDF icon; drag-drop + click; max 10 MB; mobile `capture="environment"` for camera
+  - `components/expenses/ExpenseForm.tsx` — expense claim form; vendor (free text), amount, expense date, category, cost centre, description, justification (>R5k rule); title auto-derived; reuses BudgetIndicator + ApprovalPathPreview; same confirmation dialog + draft-save pattern as PRForm
+  - `app/(dashboard)/expenses/new/page.tsx` — server component; fetches categories + cost centres; renders ExpenseForm
+  - `lib/data/expenses.test.ts` — 23 tests: schema validation, title derivation, receipt file validation
+  - Sidebar updated: added "New Expense" link (Receipt icon) between "New Request" and "My Requests"
+  - All existing API routes (`POST /api/requests`, `/[id]/attachments`, `/[id]/submit`) reused without change
+  - 139 tests passing across 10 suites; lint clean, types clean, build clean
 
 **What's next:**
-- F-006 branch ready to PR (feature/F-006)
-- F-007 (Expense claim form) — READY to start once F-006 is merged
+- F-007 branch ready to PR/merge (feature/F-007)
+- F-008 (Approval engine — processApproval(), routing logic, DOA matrix evaluation, status state machine) — READY to start once F-007 is merged
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
@@ -42,6 +41,7 @@
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-10 | F-007 complete. Expense claim form, receipt upload, 139 tests passing. | Receipt upload uses client-side FileReader for image preview; capture="environment" for mobile camera; title auto-derived from vendor_name+category; Phase 1 OCR = manual entry with receipt preview only |
 | 2026-06-10 | F-006 complete. PR form, My Requests, detail page. 116 tests passing. | Drafts use DRAFT-{uuid} temp ref; real sequential ref generated at submit; uploadAttachment uses server-side ArrayBuffer via service role; Command+Popover for vendor combobox |
 | 2026-06-10 | F-005 complete. All 4 master data screens built. 91 tests passing. | Client-side CSV via papaparse; BudgetWithCostCentre uses Omit<Budget> intersection to avoid interface extension conflict |
 | 2026-06-10 | F-004 complete. Admin UI for users + entities. shadcn/ui wired up. 36 tests passing. | Tailwind v4 requires @theme block for CSS variable → utility class mapping; service role only in lib/data layer |
