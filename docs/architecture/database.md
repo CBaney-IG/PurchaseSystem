@@ -24,6 +24,7 @@ supabase/migrations/
   20260609000003_triggers.sql            # updated_at triggers for F-003 tables (F-003)
   20260609000004_indexes.sql             # Performance indexes (F-003)
   20260609000005_seed_categories.sql     # DEFAULT entity + DOA matrix seed data (F-003)
+  20260610000001_entity_active.sql       # Add active + updated_at columns to entities (F-004)
 ```
 
 ---
@@ -39,6 +40,7 @@ CREATE TABLE public.entities (
   name       TEXT NOT NULL,
   code       TEXT NOT NULL UNIQUE,  -- e.g. 'BPO-OPS'
   parent_id  UUID REFERENCES entities(id),
+  active     BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -465,3 +467,4 @@ spend_requests 1─────────────────────�
 | 20260609000003_triggers.sql | updated_at triggers for F-003 tables (F-003) | 2026-06-09 |
 | 20260609000004_indexes.sql | Performance indexes (F-003) | 2026-06-09 |
 | 20260609000005_seed_categories.sql | DEFAULT entity + DOA matrix seed data (F-003) | 2026-06-09 |
+| 20260610000001_entity_active.sql | Add active + updated_at columns to entities table (F-004) | 2026-06-10 |
