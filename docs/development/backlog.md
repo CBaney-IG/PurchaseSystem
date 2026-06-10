@@ -38,7 +38,7 @@
 
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
-| F-008 | Approval engine — processApproval(), routing logic, DOA matrix evaluation, status state machine, approval_event recording | P0 | 📋 | F-006, F-007 | 4d | | |
+| F-008 | Approval engine — processApproval(), routing logic, DOA matrix evaluation, status state machine, approval_event recording | P0 | ✅ | F-006, F-007 | 4d | feature/F-008 | 2026-06-10 |
 | F-009 | Approver inbox — pending request list, request detail drawer, approve/reject/request-info actions, bulk approve | P0 | 📋 | F-008 | 3d | | |
 | F-010 | Email notifications — Resend integration, React Email templates, signed JWT email-action tokens, all notification triggers | P0 | 📋 | F-008 | 3d | | |
 
