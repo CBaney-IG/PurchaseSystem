@@ -49,6 +49,8 @@ export interface Entity {
   name: string
   code: string
   parent_id: string | null
+  parent?: Pick<Entity, 'id' | 'name' | 'code'>
+  active: boolean
   created_at: string
   updated_at: string
 }

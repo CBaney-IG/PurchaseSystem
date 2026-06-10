@@ -12,38 +12,46 @@
 | Feature ID | Feature | Branch | Status | Notes |
 |---|---|---|---|---|
 | F-002 | Azure AD SSO | — | ⏸ Blocked | Waiting on Azure AD credentials from IT Director |
-| F-004 | User & entity management admin UI | — | 📋 Ready | Can start — F-003 complete |
 
 ## Last Session Summary
 
-**Date:** 2026-06-09
+**Date:** 2026-06-10
 **What was done:**
-- Connected project to Supabase cloud project (otjyioljufgcccgsdiuk) via `supabase link` + `.env.local`
-- F-003 complete: 5 migration files pushed to cloud Supabase
-  - `20260609000001_full_schema.sql` — 11 remaining tables (cost_centres, budgets, vendors, approval_matrices, spend_requests, attachments, approval_events, purchase_orders, delegations, notifications, webhook_logs)
-  - `20260609000002_rls_policies.sql` — All RLS policies with entity isolation
-  - `20260609000003_triggers.sql` — updated_at triggers for all mutable tables
-  - `20260609000004_indexes.sql` — 17 performance indexes including partial indexes
-  - `20260609000005_seed_categories.sql` — DEFAULT entity + 8 spend categories × 3 levels = 24 DOA matrix rows
-- `lib/approvals/matrix.ts` — `getRequiredLevels` / `getNextRequiredLevel` helpers for DOA logic
-- `lib/approvals/matrix.test.ts` — 13 Vitest unit tests, all passing (including AC-02)
-- Fixed TypeScript strict-mode errors in F-001 Supabase SSR cookie handlers
+- F-004 complete: User & entity management admin UI
+  - `supabase/migrations/20260610000001_entity_active.sql` — added `active` + `updated_at` columns to entities table
+  - `lib/data/users.ts` — listUsers, inviteUser, updateUser, countPendingApprovals (session client for reads, service client for writes)
+  - `lib/data/entities.ts` — listEntities, createEntity, updateEntity
+  - `app/api/admin/users/route.ts` — GET/POST/PATCH with Zod validation and role-scoped access
+  - `app/api/admin/entities/route.ts` — GET/POST/PATCH, group_admin only
+  - `components/admin/InviteUserForm.tsx` — invite dialog with entity + role selection
+  - `components/admin/UserTable.tsx` — inline role change, deactivation with pending-approval guard
+  - `components/admin/EntityForm.tsx` — create/edit entity dialog
+  - `app/(dashboard)/admin/users/` — Server Component page + UsersAdminClient
+  - `app/(dashboard)/admin/entities/` — Server Component page + EntitiesAdminClient
+  - `components.json` + 11 shadcn/ui components installed
+  - `app/globals.css` updated with `@theme` block for Tailwind v4 CSS variable mapping
+  - 23 new unit tests (13 users + 10 entities), all passing; 36 total across 3 suites
+- Deactivation guard: PATCH /api/admin/users returns 409 PENDING_APPROVALS if user has pending approvals
+- "Invited" user status display deferred (requires auth admin metadata merge) — no blocking AC
+- Audit log entries for admin config changes deferred to F-015
 
 **What's next:**
-- F-002 (Azure AD SSO) — BLOCKED waiting on IT Director credentials
-- F-004 (User & entity management admin UI) — READY to start
+- F-004 branch ready to PR (feature/F-004)
+- F-002 (Azure AD SSO) — still BLOCKED waiting on IT Director credentials
+- F-005 (Master data admin screens) — READY to start once F-004 is merged
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
+- Apply migration to cloud: `supabase db push --project-ref otjyioljufgcccgsdiuk`
 - Snowflake endpoint URL — Data team (needed for F-014)
 - Resend API key — needed for F-010 (email notifications)
-- Supabase staging/production projects — create at supabase.com before Vercel setup
 - Regenerate `types/supabase.ts` from live schema: `supabase gen types typescript --project-id otjyioljufgcccgsdiuk > types/supabase.ts`
 
 ## Session History
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-10 | F-004 complete. Admin UI for users + entities. shadcn/ui wired up. 36 tests passing. | Tailwind v4 requires @theme block for CSS variable → utility class mapping; service role only in lib/data layer |
 | 2026-06-09 | F-003 complete. Full schema + RLS + indexes pushed to cloud. Matrix helpers + 13 tests written. | DOA logic: levels are cumulative up to first level whose max_amount >= amount; inactive levels are skipped |
 | 2026-06-05 | F-001 scaffolded and merged. App is runnable locally. | Email/password for dev; Azure AD deferred to F-002; minimal schema in F-001 migration |
 | 2026-06-01 | Architecture phase complete. All docs written. | Next.js 15 fixed stack; Azure AD SSO only; https://localhost:3003; single spend_requests table for PRs + expenses |
