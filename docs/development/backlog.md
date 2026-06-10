@@ -29,7 +29,7 @@
 
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
-| F-005 | Master data admin screens — cost centres, budgets, vendor catalogue, approval matrix, CSV import | P0 | 📋 | F-004 | 3d | | |
+| F-005 | Master data admin screens — cost centres, budgets, vendor catalogue, approval matrix, CSV import | P0 | ✅ | F-004 | 3d | feature/F-005 | 2026-06-10 |
 | F-006 | Purchase Requisition form — all fields, draft save, budget check, approval path preview, submission | P0 | 📋 | F-005 | 3d | | |
 | F-007 | Expense claim form — all fields, receipt upload to Supabase Storage, OCR attempt, submission | P0 | 📋 | F-005 | 3d | | |
 
@@ -112,3 +112,4 @@
 | 2026-06-01 | Resend for transactional email | Required to send email to recipients without a platform account |
 | 2026-06-01 | Single spend_requests table for PRs and expenses | Unified table simplifies approval engine; type column distinguishes them |
 | 2026-06-05 | Email/password auth for local dev (F-001) | Azure AD credentials not yet available from IT Director. Login page shows email/password form in dev; Microsoft button enabled when NEXT_PUBLIC_ENABLE_AZURE_AUTH=true. Azure AD wired in F-002. |
+| 2026-06-10 | Client-side CSV parsing for vendor/budget import (F-005) | Used papaparse in the browser to parse, validate row-by-row, and preview before POST. See tech-stack.md "CSV Import" for migration path to server-side if needed at scale. |

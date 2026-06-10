@@ -20,5 +20,5 @@ export default async function AdminEntitiesPage() {
 
   const entities = await listEntities()
 
-  return <EntitiesAdminClient initialEntities={entities} />
+  return <EntitiesAdminClient initialEntities={entities} callerRole={caller.role} />
 }

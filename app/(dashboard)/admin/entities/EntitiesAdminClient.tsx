@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Building2, Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -21,13 +21,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { EntityForm } from '@/components/admin/EntityForm'
+import { AdminNav } from '@/components/admin/AdminNav'
 import type { Entity } from '@/types/domain'
 
 interface Props {
   initialEntities: Entity[]
+  callerRole: string
 }
 
-export function EntitiesAdminClient({ initialEntities }: Props) {
+export function EntitiesAdminClient({ initialEntities, callerRole }: Props) {
   const [entities, setEntities] = useState<Entity[]>(initialEntities)
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Entity | null>(null)
@@ -53,16 +55,15 @@ export function EntitiesAdminClient({ initialEntities }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Building2 className="h-6 w-6 text-muted-foreground" />
-          <div>
-            <h1 className="text-xl font-semibold">Entities</h1>
-            <p className="text-sm text-muted-foreground">
-              {entities.length} entit{entities.length !== 1 ? 'ies' : 'y'}
-            </p>
-          </div>
+    <div className="p-8">
+      <AdminNav callerRole={callerRole} />
+
+      <div className="mt-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Entities</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {entities.length} entit{entities.length !== 1 ? 'ies' : 'y'}
+          </p>
         </div>
         <Button onClick={() => { setEditTarget(null); setFormOpen(true) }}>
           <Plus className="mr-2 h-4 w-4" />

@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { UserPlus, Users } from 'lucide-react'
+import { UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { UserTable } from '@/components/admin/UserTable'
 import { InviteUserForm } from '@/components/admin/InviteUserForm'
+import { AdminNav } from '@/components/admin/AdminNav'
 import type { Profile, Entity, UserRole } from '@/types/domain'
 
 interface Props {
@@ -27,14 +29,13 @@ export function UsersAdminClient({ initialUsers, entities, callerRole, callerEnt
   }, [])
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="h-6 w-6 text-muted-foreground" />
-          <div>
-            <h1 className="text-xl font-semibold">Users</h1>
-            <p className="text-sm text-muted-foreground">{users.length} user{users.length !== 1 ? 's' : ''}</p>
-          </div>
+    <div className="p-8">
+      <AdminNav callerRole={callerRole} />
+
+      <div className="mt-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Users</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{users.length} user{users.length !== 1 ? 's' : ''}</p>
         </div>
         <Button onClick={() => setInviteOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
@@ -42,11 +43,15 @@ export function UsersAdminClient({ initialUsers, entities, callerRole, callerEnt
         </Button>
       </div>
 
-      <UserTable
-        users={users}
-        showEntity={callerRole === 'group_admin'}
-        onRefresh={refresh}
-      />
+      <Separator className="my-5" />
+
+      <div className="rounded-md border border-slate-200 bg-white overflow-hidden">
+        <UserTable
+          users={users}
+          showEntity={callerRole === 'group_admin'}
+          onRefresh={refresh}
+        />
+      </div>
 
       <InviteUserForm
         open={inviteOpen}

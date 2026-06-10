@@ -77,7 +77,9 @@ export interface CostCentre {
   code: string
   name: string
   budget_owner_id: string | null
+  budget_owner?: Pick<Profile, 'id' | 'full_name'> | null
   parent_id: string | null
+  parent?: Pick<CostCentre, 'id' | 'code' | 'name'> | null
   active: boolean
 }
 
