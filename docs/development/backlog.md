@@ -30,7 +30,7 @@
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
 | F-005 | Master data admin screens — cost centres, budgets, vendor catalogue, approval matrix, CSV import | P0 | ✅ | F-004 | 3d | feature/F-005 | 2026-06-10 |
-| F-006 | Purchase Requisition form — all fields, draft save, budget check, approval path preview, submission | P0 | 📋 | F-005 | 3d | | |
+| F-006 | Purchase Requisition form — all fields, draft save, budget check, approval path preview, submission | P0 | ✅ | F-005 | 3d | feature/F-006 | 2026-06-10 |
 | F-007 | Expense claim form — all fields, receipt upload to Supabase Storage, OCR attempt, submission | P0 | 📋 | F-005 | 3d | | |
 
 ## Phase 3: Approval Engine & Inbox

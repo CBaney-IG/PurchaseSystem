@@ -17,27 +17,23 @@
 
 **Date:** 2026-06-10
 **What was done:**
-- F-005 complete: Master data admin screens
-  - `lib/data/vendors.ts` — listVendors, createVendor, updateVendor, importVendors
-  - `lib/data/cost-centres.ts` — listCostCentres, getCostCentreById, createCostCentre, updateCostCentre
-  - `lib/data/budgets.ts` — listBudgets, upsertBudget, importBudgets (with cost_centre_code → UUID resolution)
-  - `lib/data/approval-matrix.ts` — listMatrix, listDistinctCategories, simulateApprovalPath, updateMatrixCell, createMatrixCell
-  - API routes: `/api/admin/vendors`, `/api/admin/cost-centres`, `/api/admin/budgets`, `/api/admin/approval-matrix`, `/api/admin/approval-matrix/simulate`
-  - Components: VendorTable, VendorForm, VendorCSVImport, CostCentreTable, CostCentreForm, BudgetTable, BudgetForm, BudgetCSVImport, ApprovalMatrixGrid (with inline MatrixCellEditor), SimulatePathTool, AdminNav
-  - Pages: `/admin/vendors`, `/admin/cost-centres`, `/admin/budgets`, `/admin/approval-matrix`, `/admin` (role-based redirect)
-  - 55 new unit tests; 91 total across 7 suites (all passing)
-  - CSV import: client-side via papaparse (row-by-row validation + preview before POST). Migration path to server-side documented in tech-stack.md.
-  - Mid-year budget adjustments require mandatory `reason` field (client-enforced)
-  - "Simulate approval path" tool reuses `getRequiredLevels()` from lib/approvals/matrix.ts
+- F-006 complete: Purchase Requisition form
+  - `supabase/migrations/20260610000002_storage_attachments.sql` — private `attachments` bucket + authenticated-read RLS policy
+  - `lib/ref-number.ts` + `lib/ref-number.test.ts` — sequential PR-YYYY-NNNNN / EXP-YYYY-NNNNN generation (6 tests)
+  - `lib/data/spend-requests.ts` — createDraft, updateDraft, submitRequest, listMyRequests, getRequest, cancelRequest, getBudgetPosition, uploadAttachment
+  - `lib/data/spend-requests.test.ts` — 19 Zod schema + ref-number formatting tests
+  - API routes: `GET+POST /api/requests`, `GET /api/requests/budget`, `GET+PATCH+DELETE /api/requests/[id]`, `POST /api/requests/[id]/submit`, `POST /api/requests/[id]/attachments`
+  - Components: RequestStatusBadge, BudgetIndicator, ApprovalPathPreview, FileUpload, VendorCombobox (shadcn Command+Popover), PRForm
+  - Pages: `/requests/new`, `/requests` (My Requests list), `/requests/[id]` (detail + approval timeline)
+  - 116 tests passing across 9 suites; build clean
 
 **What's next:**
-- F-005 branch ready to PR (feature/F-005)
-- F-006 (Purchase Requisition form) — READY to start once F-005 is merged
-- F-007 (Expense claim form) — depends on F-005
+- F-006 branch ready to PR (feature/F-006)
+- F-007 (Expense claim form) — READY to start once F-006 is merged
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
-- Apply migration to cloud: `supabase db push --project-ref otjyioljufgcccgsdiuk`
+- Apply migrations to cloud: `supabase db push --project-ref otjyioljufgcccgsdiuk`
 - Snowflake endpoint URL — Data team (needed for F-014)
 - Resend API key — needed for F-010 (email notifications)
 - Regenerate `types/supabase.ts` from live schema: `supabase gen types typescript --project-id otjyioljufgcccgsdiuk > types/supabase.ts`
@@ -46,6 +42,7 @@
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-10 | F-006 complete. PR form, My Requests, detail page. 116 tests passing. | Drafts use DRAFT-{uuid} temp ref; real sequential ref generated at submit; uploadAttachment uses server-side ArrayBuffer via service role; Command+Popover for vendor combobox |
 | 2026-06-10 | F-005 complete. All 4 master data screens built. 91 tests passing. | Client-side CSV via papaparse; BudgetWithCostCentre uses Omit<Budget> intersection to avoid interface extension conflict |
 | 2026-06-10 | F-004 complete. Admin UI for users + entities. shadcn/ui wired up. 36 tests passing. | Tailwind v4 requires @theme block for CSS variable → utility class mapping; service role only in lib/data layer |
 | 2026-06-09 | F-003 complete. Full schema + RLS + indexes pushed to cloud. Matrix helpers + 13 tests written. | DOA logic: levels are cumulative up to first level whose max_amount >= amount; inactive levels are skipped |
