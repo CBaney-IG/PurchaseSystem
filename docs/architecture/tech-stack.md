@@ -87,6 +87,50 @@ The `--experimental-https` flag generates a self-signed certificate for local HT
 - Server Actions → `form action` handlers or API endpoints
 - `src/components/`, `src/lib/`, `src/types/` mostly unchanged
 
+## CSV Import — Client-side vs Server-side
+
+**Current approach (F-005):** Client-side parsing via `papaparse`.
+The browser parses the uploaded file, validates rows, and shows errors inline before the user commits. The validated rows are then POSTed as JSON to the API route (`/api/admin/vendors`, `/api/admin/budgets`). No file bytes ever reach the server — only the parsed, validated JSON array does.
+
+**Why this was chosen:** Gives instant row-by-row feedback without a round-trip. Simple to implement. Acceptable for files of up to ~10,000 rows at typical admin usage.
+
+**When to switch to server-side parsing:**
+Switch if you encounter any of these at scale:
+- Files exceed ~5,000 rows and browser parsing noticeably stalls the UI thread
+- CSV files are being generated programmatically (no human review step needed before import)
+- You need to stream large files rather than load them fully into memory
+
+**Migration path (client-side → server-side):**
+
+1. **Remove papaparse from the client component.** Replace the `<input type="file" onChange={parseInBrowser}>` handler with a standard `<form enctype="multipart/form-data">` or a `fetch` with `FormData`.
+
+2. **Update the API route** to accept `multipart/form-data` instead of `application/json`:
+   ```typescript
+   // Before: req.json() → string[][]
+   // After:
+   const formData = await request.formData()
+   const file = formData.get('file') as File
+   const text = await file.text()
+   // parse with a server-side CSV lib (e.g. csv-parse/sync — no extra dep if already in project)
+   ```
+
+3. **Add `csv-parse`** (Node.js, server-only — zero client bundle impact):
+   ```bash
+   npm install csv-parse
+   ```
+
+4. **Return validation errors in the same shape** the client currently receives:
+   ```typescript
+   { valid: Row[], errors: { row: number, message: string }[] }
+   ```
+   The UI component already consumes this shape — no front-end change needed beyond the file upload mechanism.
+
+5. **Delete papaparse** from `package.json` once the API route is handling parsing.
+
+**What does NOT change:** The validation logic (Zod schemas), the confirmation step before insert, the API route's insert logic, and all tests. The only moving part is where the bytes-to-rows conversion happens.
+
+---
+
 ## Adding New Dependencies
 
 Before adding any new package:
