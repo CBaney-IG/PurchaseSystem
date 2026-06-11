@@ -6,12 +6,6 @@ const PREFIX: Record<SpendRequestType, string> = {
   expense_claim: 'EXP',
 }
 
-/**
- * Generates the next sequential reference number for a spend request.
- * Format: PR-YYYY-NNNNN or EXP-YYYY-NNNNN (5-digit zero-padded).
- * Seeds the sequence from the count of existing refs matching the prefix+year pattern.
- * The UNIQUE constraint on reference_no handles the rare concurrent-insert race.
- */
 export async function generateRefNumber(
   type: SpendRequestType,
   service: SupabaseClient,
@@ -28,4 +22,20 @@ export async function generateRefNumber(
 
   const seq = ((count ?? 0) + 1).toString().padStart(5, '0')
   return `${prefix}-${year}-${seq}`
+}
+
+// PO-YYYY-NNNNN — queries purchase_orders table for its own sequence
+export async function generatePORefNumber(
+  service: SupabaseClient,
+  year: number
+): Promise<string> {
+  const { count, error } = await service
+    .from('purchase_orders')
+    .select('*', { count: 'exact', head: true })
+    .like('reference_no', `PO-${year}-%`)
+
+  if (error) throw new Error(error.message)
+
+  const seq = ((count ?? 0) + 1).toString().padStart(5, '0')
+  return `PO-${year}-${seq}`
 }

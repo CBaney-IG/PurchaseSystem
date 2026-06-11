@@ -5,6 +5,7 @@ import ApprovalNeeded from '@/emails/ApprovalNeeded'
 import RequestApproved from '@/emails/RequestApproved'
 import RequestRejected from '@/emails/RequestRejected'
 import InfoRequested from '@/emails/InfoRequested'
+import POCreated from '@/emails/POCreated'
 
 function isStubKey(): boolean {
   return (process.env.RESEND_API_KEY ?? '').startsWith('re_stub')
@@ -224,6 +225,67 @@ export async function sendInfoRequested(params: InfoRequestedParams): Promise<Se
     subject: `[Action Required] More information needed — ${request.reference_no}: ${request.title}`,
     html,
   })
+
+  return { sent: true }
+}
+
+export interface POCreatedParams {
+  po: {
+    reference_no: string
+    amount: number
+    currency: string
+  }
+  pr: {
+    reference_no: string
+    title: string
+    vendor_name: string | null
+  }
+  procurementOfficers: { email: string; full_name: string }[]
+  poUrl: string
+}
+
+export async function sendPOCreated(params: POCreatedParams): Promise<SendResult> {
+  const { po, pr, procurementOfficers, poUrl } = params
+
+  if (procurementOfficers.length === 0) {
+    console.warn('[email] sendPOCreated: no procurement officers found')
+    return { sent: false, reason: 'no_recipients' }
+  }
+
+  if (isStubKey()) {
+    console.log('[email:stub] sendPOCreated', {
+      to: procurementOfficers.map((p) => p.email),
+      subject: `New PO draft ready: ${po.reference_no} — ${pr.title}`,
+    })
+    return { sent: false, reason: 'stub' }
+  }
+
+  const resend = getResend()
+  const from = getFromAddress()
+
+  await Promise.all(
+    procurementOfficers.map(async (officer) => {
+      const html = await render(
+        POCreated({
+          poRef: po.reference_no,
+          prRef: pr.reference_no,
+          prTitle: pr.title,
+          vendorName: pr.vendor_name,
+          amount: po.amount,
+          currency: po.currency,
+          procurementOfficerName: officer.full_name,
+          platformUrl: poUrl,
+        })
+      )
+
+      await resend.emails.send({
+        from,
+        to: officer.email,
+        subject: `New PO draft ready: ${po.reference_no} — ${pr.title}`,
+        html,
+      })
+    })
+  )
 
   return { sent: true }
 }

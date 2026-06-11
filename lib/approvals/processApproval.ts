@@ -5,7 +5,9 @@ import {
   sendApprovalNeeded,
   sendRequestOutcome,
   sendInfoRequested,
+  sendPOCreated,
 } from '@/lib/notifications/send'
+import { generatePOFromApprovedRequest } from './generatePO'
 
 // ---- Types ----
 
@@ -174,7 +176,27 @@ export async function processApproval(
     return { success: false, newStatus: currentStatus, error: eventErr.message }
   }
 
-  // 7. Fire-and-forget notifications — failure must not abort the approval
+  // 7. Fire-and-forget PO generation (purchase_requests only, on final approval)
+  if (newStatus === 'approved' && request.type === 'purchase_request') {
+    generatePOFromApprovedRequest(requestId)
+      .then((result) => {
+        if (!result.success) {
+          console.error('[generatePO] failed:', result.error)
+          return
+        }
+        // Notify procurement officers of the new PO draft
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://localhost:3003'
+        notifyProcurementOfficers({
+          service,
+          request,
+          poRef: result.poRef!,
+          poUrl: `${appUrl}/purchase-orders`,
+        }).catch((err) => console.error('[notifications] PO notify failed:', err))
+      })
+      .catch((err) => console.error('[generatePO] threw:', err))
+  }
+
+  // 8. Fire-and-forget notifications — failure must not abort the approval
   dispatchNotifications({
     service,
     request,
@@ -277,4 +299,40 @@ async function dispatchNotifications({
       approvers: approvers ?? [],
     })
   }
+}
+
+// ---- PO notification (fire-and-forget) ----
+
+async function notifyProcurementOfficers({
+  service,
+  request,
+  poRef,
+  poUrl,
+}: {
+  service: ReturnType<typeof createServiceClient>
+  request: Record<string, unknown>
+  poRef: string
+  poUrl: string
+}) {
+  const { data: officers } = await service
+    .from('profiles')
+    .select('email, full_name')
+    .eq('entity_id', request.entity_id as string)
+    .eq('role', 'procurement_officer')
+    .eq('active', true)
+
+  await sendPOCreated({
+    po: {
+      reference_no: poRef,
+      amount: request.amount as number,
+      currency: (request.currency as string) ?? 'ZAR',
+    },
+    pr: {
+      reference_no: request.reference_no as string,
+      title: request.title as string,
+      vendor_name: (request.vendor_name as string | null) ?? null,
+    },
+    procurementOfficers: officers ?? [],
+    poUrl,
+  })
 }
