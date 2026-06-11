@@ -4,8 +4,8 @@
 
 ## Active Phase
 
-**Phase:** Phase 3 — Approval Engine & Inbox (in progress)
-**Phase goal:** Requests route through approvers, with full status tracking.
+**Phase:** Phase 3 complete — starting Phase 4 (POs, Budget Engine & Dashboard)
+**Phase goal:** Full downstream flow from approved PR to PO; real-time budget tracking; unified dashboard.
 
 ## In Progress
 
@@ -15,33 +15,36 @@
 
 ## Last Session Summary
 
-**Date:** 2026-06-10
+**Date:** 2026-06-11
 **What was done:**
-- F-008 complete: Approval engine
-  - `lib/approvals/processApproval.ts` — core state machine; approve/reject/info_requested/info_provided; calls `getNextRequiredLevel` for routing; inserts immutable `approval_event` on every action
-  - `lib/approvals/processApproval.test.ts` — 25 tests: levelToStatus, statusToLevel, status-transition guards, all four API body Zod schemas
-  - `app/api/approvals/[id]/approve` — POST; approver-role + entity check
-  - `app/api/approvals/[id]/reject` — POST; mandatory comment (min 10 chars)
-  - `app/api/approvals/[id]/request-info` — POST; requires question comment
-  - `app/api/approvals/[id]/provide-info` — POST; requester-only; returns request to pending_lX
-  - `app/api/approvals/inbox` — GET; pending requests scoped to caller's approver level; filterable by category/amount
-  - 164 tests passing across 11 suites; build clean (5 new routes)
+- F-009 complete: Approver inbox UI (merged to main prior session)
+- F-010 complete: Email notifications
+  - `lib/notifications/emailTokens.ts` — HMAC-SHA256 JWT sign/verify; jti single-use enforcement via webhook_logs
+  - `lib/notifications/send.ts` — Resend integration with stub mode (re_stub prefix → console log only)
+  - `emails/ApprovalNeeded.tsx`, `RequestApproved.tsx`, `RequestRejected.tsx`, `InfoRequested.tsx` — React Email templates
+  - `app/api/approvals/email-action/route.ts` — no-auth JWT route; GET approve executes immediately; GET reject shows HTML form; POST processes rejection
+  - Fire-and-forget notification dispatch wired into processApproval() and submit route
+  - `.env.example` updated with stub key and explanation
+  - HTML-escaped user-supplied values in email-action HTML pages (XSS prevention)
+  - 26 new tests; 216 total passing
 
 **What's next:**
-- F-009 (Approver inbox UI) — READY to start; F-008 merged to main
-- F-010 (Email notifications) — depends on F-008 ✅; can run after F-009
+- F-011 (Purchase Order generation) — READY; depends on F-008 ✅
+- F-012 (Budget engine) — READY; depends on F-008 ✅
+- F-013 (Dashboard) — depends on F-009 ✅ and F-012
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
 - Apply migrations to cloud: `supabase db push --project-ref otjyioljufgcccgsdiuk`
 - Snowflake endpoint URL — Data team (needed for F-014)
-- Resend API key — needed for F-010 (email notifications)
+- Resend API key — get real key from resend.com; replace re_stub placeholder in .env.local
 - Regenerate `types/supabase.ts` from live schema: `supabase gen types typescript --project-id otjyioljufgcccgsdiuk > types/supabase.ts`
 
 ## Session History
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-11 | F-009 + F-010 complete. Approver inbox UI, email notifications, email-action JWT route. 216 tests passing. | Reject-via-email uses GET→form→POST flow (can't embed reason in a link); stub mode via re_stub prefix on RESEND_API_KEY; jti stored in webhook_logs for single-use enforcement |
 | 2026-06-10 | F-008 complete. Approval engine, 5 API routes, 164 tests passing. | processApproval is the single write path for all status transitions; approval_events are insert-only via service role; levels 4-6 cap to pending_l3 status while current_level tracks real number |
 | 2026-06-10 | F-007 complete. Expense claim form, receipt upload, 139 tests passing. | Receipt upload uses client-side FileReader for image preview; capture="environment" for mobile camera; title auto-derived from vendor_name+category; Phase 1 OCR = manual entry with receipt preview only |
 | 2026-06-10 | F-006 complete. PR form, My Requests, detail page. 116 tests passing. | Drafts use DRAFT-{uuid} temp ref; real sequential ref generated at submit; uploadAttachment uses server-side ArrayBuffer via service role; Command+Popover for vendor combobox |

@@ -1,6 +1,11 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { getNextRequiredLevel } from './matrix'
 import type { SpendRequestStatus } from '@/types/domain'
+import {
+  sendApprovalNeeded,
+  sendRequestOutcome,
+  sendInfoRequested,
+} from '@/lib/notifications/send'
 
 // ---- Types ----
 
@@ -169,5 +174,107 @@ export async function processApproval(
     return { success: false, newStatus: currentStatus, error: eventErr.message }
   }
 
+  // 7. Fire-and-forget notifications — failure must not abort the approval
+  dispatchNotifications({
+    service,
+    request,
+    action,
+    newStatus,
+    newLevel,
+    comment,
+    approverId,
+  }).catch((err) => console.error('[notifications] dispatch failed:', err))
+
   return { success: true, newStatus }
+}
+
+// ---- Notification dispatch (fire-and-forget) ----
+
+async function dispatchNotifications({
+  service,
+  request,
+  action,
+  newStatus,
+  newLevel,
+  comment,
+  approverId,
+}: {
+  service: ReturnType<typeof createServiceClient>
+  request: Record<string, unknown>
+  action: ProcessApprovalAction
+  newStatus: SpendRequestStatus
+  newLevel: number
+  comment?: string
+  approverId: string
+}) {
+  // Fetch requester profile (needed for most notification types)
+  const { data: requester } = await service
+    .from('profiles')
+    .select('id, full_name, email')
+    .eq('id', request.requester_id as string)
+    .single()
+
+  if (!requester) return
+
+  const reqData = {
+    id: request.id as string,
+    reference_no: request.reference_no as string,
+    title: request.title as string,
+    type: request.type as string,
+    category: request.category as string,
+    amount: request.amount as number,
+    currency: (request.currency as string) ?? 'ZAR',
+    justification: (request.justification as string | null) ?? null,
+    budget_flag: (request.budget_flag as boolean) ?? false,
+    priority: (request.priority as string) ?? 'normal',
+  }
+
+  if (newStatus === 'approved' || newStatus === 'rejected') {
+    await sendRequestOutcome({
+      request: reqData,
+      requester,
+      outcome: newStatus,
+      rejectionReason: newStatus === 'rejected' ? comment : undefined,
+    })
+    return
+  }
+
+  if (newStatus === 'pending_info') {
+    const { data: approverProfile } = await service
+      .from('profiles')
+      .select('full_name')
+      .eq('id', approverId)
+      .single()
+
+    await sendInfoRequested({
+      request: reqData,
+      requester,
+      approverName: approverProfile?.full_name ?? 'An approver',
+      question: comment ?? '',
+    })
+    return
+  }
+
+  if (newStatus.startsWith('pending_l') && action === 'approve') {
+    const approverRole = `approver_l${newLevel}`
+    const { data: approvers } = await service
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('entity_id', request.entity_id as string)
+      .eq('role', approverRole)
+      .eq('active', true)
+
+    const { data: costCentre } = await service
+      .from('cost_centres')
+      .select('code')
+      .eq('id', request.cost_centre_id as string)
+      .single()
+
+    await sendApprovalNeeded({
+      request: reqData,
+      requesterName: requester.full_name,
+      costCentreCode: costCentre?.code ?? '',
+      approvers: approvers ?? [],
+    })
+  }
 }
