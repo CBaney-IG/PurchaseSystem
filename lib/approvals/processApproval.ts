@@ -8,6 +8,7 @@ import {
   sendPOCreated,
 } from '@/lib/notifications/send'
 import { generatePOFromApprovedRequest } from './generatePO'
+import { updateCommitted } from '@/lib/data/budgets'
 
 // ---- Types ----
 
@@ -176,7 +177,18 @@ export async function processApproval(
     return { success: false, newStatus: currentStatus, error: eventErr.message }
   }
 
-  // 7. Fire-and-forget PO generation (purchase_requests only, on final approval)
+  // 7a. Decrement committed spend on rejection — fire-and-forget
+  if (action === 'reject') {
+    const year = new Date().getFullYear()
+    updateCommitted({
+      costCentreId: request.cost_centre_id as string,
+      category: request.category as string,
+      year,
+      delta: -(request.amount as number),
+    }).catch((err) => console.error('[budget] rejection decrement failed:', err))
+  }
+
+  // 7b. Fire-and-forget PO generation (purchase_requests only, on final approval)
   if (newStatus === 'approved' && request.type === 'purchase_request') {
     generatePOFromApprovedRequest(requestId)
       .then((result) => {

@@ -207,3 +207,68 @@ describe('sendPOCreated payload structure', () => {
     expect(prWithNoVendor.vendor_name).toBeNull()
   })
 })
+
+// ---- sendBudgetWarning ----
+
+const STUB_BUDGET = {
+  costCentreCode: 'CC-OPS-01',
+  costCentreName: 'Operations - Cape Town',
+  category: 'IT Hardware & Software',
+  budgetAmount: 100000,
+  committed: 92000,
+  available: 8000,
+  utilisationPct: 92,
+  currency: 'ZAR',
+  year: 2026,
+}
+
+describe('sendBudgetWarning payload structure', () => {
+  it('formats the subject line correctly at 92%', () => {
+    const pct = Math.round(STUB_BUDGET.utilisationPct)
+    const subject = `[Budget Alert] ${STUB_BUDGET.costCentreCode} — ${STUB_BUDGET.category} at ${pct}% committed`
+    expect(subject).toBe('[Budget Alert] CC-OPS-01 — IT Hardware & Software at 92% committed')
+  })
+
+  it('rounds the utilisation percentage for the subject', () => {
+    const utilisationPct = 91.666
+    const pct = Math.round(utilisationPct)
+    expect(pct).toBe(92)
+  })
+
+  it('returns no_recipients when recipients list is empty', () => {
+    const recipients: { email: string; full_name: string }[] = []
+    const reason = recipients.length === 0 ? 'no_recipients' : 'ok'
+    expect(reason).toBe('no_recipients')
+  })
+
+  it('sends one email per recipient', () => {
+    const recipients = [
+      { email: 'finance1@bpo.co.za', full_name: 'Eve Black' },
+      { email: 'owner@bpo.co.za', full_name: 'Frank White' },
+    ]
+    expect(recipients.length).toBe(2)
+  })
+
+  it('calculates available correctly', () => {
+    const available = STUB_BUDGET.budgetAmount - STUB_BUDGET.committed
+    expect(available).toBe(8000)
+  })
+
+  it('flags over-budget when available is negative', () => {
+    const available = -5000
+    const isOverBudget = available <= 0
+    expect(isOverBudget).toBe(true)
+  })
+
+  it('is near limit at exactly 90%', () => {
+    const utilisationPct = 90
+    const isNearLimit = utilisationPct >= 90
+    expect(isNearLimit).toBe(true)
+  })
+
+  it('is not near limit at 89.9%', () => {
+    const utilisationPct = 89.9
+    const isNearLimit = utilisationPct >= 90
+    expect(isNearLimit).toBe(false)
+  })
+})

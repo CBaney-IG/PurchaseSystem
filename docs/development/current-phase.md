@@ -4,7 +4,7 @@
 
 ## Active Phase
 
-**Phase:** Phase 3 complete — starting Phase 4 (POs, Budget Engine & Dashboard)
+**Phase:** Phase 4 — POs, Budget Engine & Dashboard (F-013 remaining)
 **Phase goal:** Full downstream flow from approved PR to PO; real-time budget tracking; unified dashboard.
 
 ## In Progress
@@ -17,22 +17,16 @@
 
 **Date:** 2026-06-11
 **What was done:**
-- F-011 complete: Purchase Order generation
-  - `lib/data/purchase-orders.ts` — full PO data layer: `isValidPOTransition`, `listPurchaseOrders`, `getPurchaseOrder`, `createPurchaseOrder` (idempotency guard), `updatePurchaseOrder`
-  - `lib/approvals/generatePO.ts` — `generatePOFromApprovedRequest()` orchestrator; guards expense_claim type; wraps errors cleanly
-  - `lib/ref-number.ts` — `generatePORefNumber()` added (queries purchase_orders table for independent PO-YYYY-NNNNN sequence)
-  - `emails/POCreated.tsx` — React Email template for procurement officer notification
-  - `lib/notifications/send.ts` — `sendPOCreated()` added; stub mode + real Resend send to all active procurement officers
-  - `lib/approvals/processApproval.ts` — step 7 wires PO generation + procurement officer notification as fire-and-forget on final PR approval
-  - `app/(dashboard)/purchase-orders/page.tsx` — PO list screen (role-guarded; table with status badges; link to detail)
-  - `app/(dashboard)/purchase-orders/[id]/page.tsx` — PO detail page (Server Component; shows all fields, originating PR link)
-  - `app/(dashboard)/purchase-orders/[id]/POStatusForm.tsx` — Client Component; Server Action form for status/notes/expected_delivery update
-  - `app/(dashboard)/purchase-orders/[id]/actions.ts` — `updatePOAction` Server Action with role guard + transition validation
-  - 36 new tests; 252 total passing
+- F-012 complete: Budget engine
+  - `lib/data/budgets.ts` — `updateCommitted(costCentreId, category, year, delta)` with `UpdateCommittedResult` (newCommitted, budgetAmount, utilisationPct, isNearLimit)
+  - `lib/data/spend-requests.ts` — `submitRequest` now increments committed on submit (fire-and-forget); `cancelRequest` decrements committed when cancelling a pending_l1 request; `trackBudgetIncrement` private helper dispatches 90% budget alert to budget owner + finance users
+  - `lib/approvals/processApproval.ts` — decrements committed on rejection (fire-and-forget, step 7a)
+  - `emails/BudgetWarning.tsx` — React Email template with amber styling; shows committed %, budget amount, remaining
+  - `lib/notifications/send.ts` — `sendBudgetWarning()` added; sends to budget owner + all finance users; stub mode support
+  - 23 new tests; 275 total passing
 
 **What's next:**
-- F-012 (Budget engine) — READY; depends on F-008 ✅
-- F-013 (Dashboard) — depends on F-009 ✅ and F-012
+- F-013 (Dashboard) — READY; depends on F-009 ✅ and F-012 ✅
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
