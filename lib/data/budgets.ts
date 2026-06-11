@@ -121,3 +121,46 @@ export async function importBudgets(
   if (error) throw new Error(error.message)
   return { inserted: records.length, errors }
 }
+
+export interface UpdateCommittedResult {
+  newCommitted: number
+  budgetAmount: number
+  utilisationPct: number
+  isNearLimit: boolean
+}
+
+export async function updateCommitted(params: {
+  costCentreId: string
+  category: string
+  year: number
+  delta: number
+}): Promise<UpdateCommittedResult | null> {
+  const service = createServiceClient()
+  const { costCentreId, category, year, delta } = params
+
+  const { data: existing, error: fetchErr } = await service
+    .from('budgets')
+    .select('id, amount, committed')
+    .eq('cost_centre_id', costCentreId)
+    .eq('category', category)
+    .eq('period_year', year)
+    .is('period_month', null)
+    .maybeSingle()
+
+  if (fetchErr) throw new Error(fetchErr.message)
+  if (!existing) return null
+
+  const budgetAmount = existing.amount as number
+  const newCommitted = Math.max(0, (existing.committed as number) + delta)
+  const utilisationPct = budgetAmount > 0 ? (newCommitted / budgetAmount) * 100 : 0
+  const isNearLimit = utilisationPct >= 90
+
+  const { error: updateErr } = await service
+    .from('budgets')
+    .update({ committed: newCommitted })
+    .eq('id', existing.id)
+
+  if (updateErr) throw new Error(updateErr.message)
+
+  return { newCommitted, budgetAmount, utilisationPct, isNearLimit }
+}

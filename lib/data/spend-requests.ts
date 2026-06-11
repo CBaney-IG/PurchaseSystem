@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { generateRefNumber } from '@/lib/ref-number'
 import type { SpendRequest, SpendRequestType, SpendRequestAttachment } from '@/types/domain'
+import { updateCommitted } from '@/lib/data/budgets'
+import { sendBudgetWarning } from '@/lib/notifications/send'
 
 // ---- Types ----
 
@@ -270,11 +272,27 @@ export async function submitRequest(id: string, requesterId: string): Promise<Sp
 
   if (eventErr) throw new Error(eventErr.message)
 
+  // Increment committed spend — fire-and-forget, must not abort submission
+  trackBudgetIncrement(service, {
+    costCentreId: request.cost_centre_id as string,
+    category: request.category as string,
+    amount: request.amount as number,
+    year,
+  }).catch((err) => console.error('[budget] increment failed:', err))
+
   return updated as SpendRequest
 }
 
 export async function cancelRequest(id: string): Promise<void> {
   const service = createServiceClient()
+
+  // Fetch current state so we know whether to decrement committed
+  const { data: existing } = await service
+    .from('spend_requests')
+    .select('status, amount, cost_centre_id, category')
+    .eq('id', id)
+    .single()
+
   const { error } = await service
     .from('spend_requests')
     .update({ status: 'cancelled' })
@@ -282,6 +300,83 @@ export async function cancelRequest(id: string): Promise<void> {
     .in('status', ['draft', 'pending_l1'])
 
   if (error) throw new Error(error.message)
+
+  // Decrement committed if the request had been submitted (not just a draft)
+  if (existing && existing.status === 'pending_l1') {
+    const year = new Date().getFullYear()
+    updateCommitted({
+      costCentreId: existing.cost_centre_id as string,
+      category: existing.category as string,
+      year,
+      delta: -(existing.amount as number),
+    }).catch((err) => console.error('[budget] cancel decrement failed:', err))
+  }
+}
+
+// ---- Budget tracking helpers ----
+
+async function trackBudgetIncrement(
+  service: ReturnType<typeof createServiceClient>,
+  params: { costCentreId: string; category: string; amount: number; year: number }
+): Promise<void> {
+  const result = await updateCommitted({
+    costCentreId: params.costCentreId,
+    category: params.category,
+    year: params.year,
+    delta: params.amount,
+  })
+  if (!result?.isNearLimit) return
+
+  // 90% or over — fetch cost centre details and dispatch alert
+  const { data: costCentre } = await service
+    .from('cost_centres')
+    .select('name, code, budget_owner_id, entity_id')
+    .eq('id', params.costCentreId)
+    .single()
+
+  if (!costCentre) return
+
+  const recipients: { email: string; full_name: string }[] = []
+
+  const { data: financeUsers } = await service
+    .from('profiles')
+    .select('email, full_name')
+    .eq('entity_id', costCentre.entity_id as string)
+    .eq('role', 'finance')
+    .eq('active', true)
+
+  if (financeUsers) {
+    recipients.push(
+      ...financeUsers.map((u) => ({ email: u.email as string, full_name: u.full_name as string }))
+    )
+  }
+
+  if (costCentre.budget_owner_id) {
+    const { data: owner } = await service
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', costCentre.budget_owner_id as string)
+      .single()
+    if (owner) {
+      const ownerEmail = owner.email as string
+      if (!recipients.find((r) => r.email === ownerEmail)) {
+        recipients.push({ email: ownerEmail, full_name: owner.full_name as string })
+      }
+    }
+  }
+
+  await sendBudgetWarning({
+    costCentreName: costCentre.name as string,
+    costCentreCode: costCentre.code as string,
+    category: params.category,
+    budgetAmount: result.budgetAmount,
+    committed: result.newCommitted,
+    available: result.budgetAmount - result.newCommitted,
+    utilisationPct: result.utilisationPct,
+    currency: 'ZAR',
+    year: params.year,
+    recipients,
+  })
 }
 
 export async function uploadAttachment(

@@ -6,6 +6,7 @@ import RequestApproved from '@/emails/RequestApproved'
 import RequestRejected from '@/emails/RequestRejected'
 import InfoRequested from '@/emails/InfoRequested'
 import POCreated from '@/emails/POCreated'
+import BudgetWarning from '@/emails/BudgetWarning'
 
 function isStubKey(): boolean {
   return (process.env.RESEND_API_KEY ?? '').startsWith('re_stub')
@@ -284,6 +285,56 @@ export async function sendPOCreated(params: POCreatedParams): Promise<SendResult
         subject: `New PO draft ready: ${po.reference_no} — ${pr.title}`,
         html,
       })
+    })
+  )
+
+  return { sent: true }
+}
+
+export interface BudgetWarningParams {
+  costCentreName: string
+  costCentreCode: string
+  category: string
+  budgetAmount: number
+  committed: number
+  available: number
+  utilisationPct: number
+  currency: string
+  year: number
+  recipients: { email: string; full_name: string }[]
+}
+
+export async function sendBudgetWarning(params: BudgetWarningParams): Promise<SendResult> {
+  const { recipients } = params
+
+  if (recipients.length === 0) {
+    console.warn('[email] sendBudgetWarning: no recipients found')
+    return { sent: false, reason: 'no_recipients' }
+  }
+
+  const pct = Math.round(params.utilisationPct)
+  const subject = `[Budget Alert] ${params.costCentreCode} — ${params.category} at ${pct}% committed`
+
+  if (isStubKey()) {
+    console.log('[email:stub] sendBudgetWarning', {
+      to: recipients.map((r) => r.email),
+      subject,
+    })
+    return { sent: false, reason: 'stub' }
+  }
+
+  const resend = getResend()
+  const from = getFromAddress()
+
+  await Promise.all(
+    recipients.map(async (recipient) => {
+      const html = await render(
+        BudgetWarning({
+          ...params,
+          recipientName: recipient.full_name,
+        })
+      )
+      await resend.emails.send({ from, to: recipient.email, subject, html })
     })
   )
 
