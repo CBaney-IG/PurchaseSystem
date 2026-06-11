@@ -17,18 +17,18 @@
 
 **Date:** 2026-06-11
 **What was done:**
-- F-013 complete: Dashboard
-  - `lib/data/dashboard.ts` — `getDashboardMetrics()` (parallel queries: my pending count, pending approval count, entity budget utilisation, YTD spend); `getOverBudgetCostCentres()` (cost centres ≥90% committed); `getMyRecentRequests()`
-  - `components/dashboard/MetricCards.tsx` — async Server Component; 4 metric cards with colour-coded values (green/amber/red thresholds)
-  - `components/dashboard/MetricCardsSkeleton.tsx` — Suspense fallback skeleton
-  - `components/dashboard/BudgetAlertBanner.tsx` — async Server Component; amber warning banner for finance/admin/group_admin
-  - `components/dashboard/RecentRequestsWidget.tsx` — async Server Component; last 10 requests for requesters
-  - `app/(dashboard)/dashboard/page.tsx` — replaced placeholder; Suspense boundaries for each async section; role-based content (ApprovalInbox for approvers, RecentRequestsWidget for requesters); quick-action buttons
-  - 21 new tests; 296 total passing
+- F-016 complete: Auto-escalation
+  - `emails/ApprovalReminder.tsx` — amber-banner reminder email with signed JWT Approve/Reject links; `hoursOverdue` prop
+  - `emails/ApprovalEscalated.tsx` — red-banner escalation email; `isManager` prop drives dual messaging
+  - `lib/notifications/send.ts` — added `sendApprovalReminder()` and `sendEscalationAlert()` with stub-mode support
+  - `lib/escalation/checkEscalations.ts` — core cron engine: 24h reminder, 48h escalation to manager (group_admin fallback); idempotency guards; `EscalationReport` return type
+  - `app/api/webhooks/escalation-check/route.ts` — GET; auth via webhook secret or admin/group_admin session
+  - `lib/escalation/checkEscalations.test.ts` — 9 tests covering all branches
+  - 317 total tests passing
 
 **What's next:**
-- F-014 (Snowflake integration) — READY; depends on F-008 ✅
-- F-015 (Audit trail & reports) — READY; depends on F-008 ✅
+- F-014 (Snowflake integration) — READY; on branch feature/F-014 (stubbed with STUB:// mode)
+- F-015 (Audit trail & reports) — READY; on branch feature/F-015
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
@@ -41,6 +41,7 @@
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-11 | F-016 complete. Auto-escalation: 24h reminder + 48h manager escalation engine, two email templates, escalation-check API route. 317 tests passing. | checkEscalations is a Next.js API route (not Edge Function) for local dev; idempotency via notifications + approval_events guards; non-enumerable `then` on mock chains can't be spread — use call-count tracking instead |
 | 2026-06-11 | F-013 complete. Dashboard: 4 metric cards, Suspense streaming, role-based content (approver inbox vs recent requests), budget alert banner. 296 tests passing. | Async Server Components + Suspense for metric cards and request list; ApprovalInbox reused on dashboard; join cast via `as unknown as` (Supabase types join as array before type regen) |
 | 2026-06-11 | F-012 complete. Budget engine — committed tracking on submit/cancel/reject, 90% alert emails. 275 tests. | Fire-and-forget pattern for budget increments/decrements; BudgetWarning email previewText must be pre-computed string (not JSX with embedded number) |
 | 2026-06-11 | F-011 complete. PO generation wired into processApproval, PO list + detail pages, status update Server Action. 252 tests passing. | PO generation is fire-and-forget; idempotency guard prevents duplicate POs; isValidPOTransition enforces closed/cancelled as terminal; issued_at auto-set when transitioning to issued |
