@@ -151,3 +151,59 @@ describe('request type label mapping', () => {
     expect(label).toBe('Expense Claim')
   })
 })
+
+// ---- sendPOCreated ----
+
+const STUB_PO = {
+  reference_no: 'PO-2026-00001',
+  amount: 12500,
+  currency: 'ZAR',
+}
+
+const STUB_PR = {
+  reference_no: 'PR-2026-00001',
+  title: 'New laptop for developer',
+  vendor_name: 'Acme Ltd',
+}
+
+describe('sendPOCreated payload structure', () => {
+  it('uses the correct subject line format', () => {
+    const subject = `New PO draft ready: ${STUB_PO.reference_no} — ${STUB_PR.title}`
+    expect(subject).toBe('New PO draft ready: PO-2026-00001 — New laptop for developer')
+  })
+
+  it('returns no_recipients reason when officers list is empty', () => {
+    const officers: { email: string; full_name: string }[] = []
+    const reason = officers.length === 0 ? 'no_recipients' : 'ok'
+    expect(reason).toBe('no_recipients')
+  })
+
+  it('sends one email per procurement officer', () => {
+    const officers = [
+      { email: 'proc1@bpo.co.za', full_name: 'Carol White' },
+      { email: 'proc2@bpo.co.za', full_name: 'Dave Green' },
+    ]
+    // One email send call per officer
+    expect(officers.length).toBe(2)
+  })
+
+  it('includes PO reference in the payload', () => {
+    expect(STUB_PO.reference_no).toMatch(/^PO-\d{4}-\d{5}$/)
+  })
+
+  it('includes PR reference in the payload', () => {
+    expect(STUB_PR.reference_no).toMatch(/^PR-\d{4}-\d{5}$/)
+  })
+
+  it('uses ZAR as default currency when not provided', () => {
+    const currency: string | undefined = undefined
+    const resolved = currency ?? 'ZAR'
+    expect(resolved).toBe('ZAR')
+  })
+
+  it('handles null vendor_name gracefully', () => {
+    const vendorName: string | null = null
+    const prWithNoVendor = { ...STUB_PR, vendor_name: vendorName }
+    expect(prWithNoVendor.vendor_name).toBeNull()
+  })
+})

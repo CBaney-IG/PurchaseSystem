@@ -47,7 +47,7 @@
 
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
-| F-011 | Purchase Order generation — auto-draft PO from approved PR, PO management screen for Procurement Officer | P0 | 📋 | F-008 | 2d | | |
+| F-011 | Purchase Order generation — auto-draft PO from approved PR, PO management screen for Procurement Officer | P0 | ✅ | F-008 | 2d | feature/F-011 | 2026-06-11 |
 | F-012 | Budget engine — real-time balance on PR form, committed-spend updates on each approval event, over-budget flagging | P0 | 📋 | F-008 | 2d | | |
 | F-013 | Dashboard — metric cards, approval inbox widget, recent requests list, budget alert banner, notification bell | P0 | 📋 | F-009, F-012 | 2d | | |
 

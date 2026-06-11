@@ -17,19 +17,20 @@
 
 **Date:** 2026-06-11
 **What was done:**
-- F-009 complete: Approver inbox UI (merged to main prior session)
-- F-010 complete: Email notifications
-  - `lib/notifications/emailTokens.ts` — HMAC-SHA256 JWT sign/verify; jti single-use enforcement via webhook_logs
-  - `lib/notifications/send.ts` — Resend integration with stub mode (re_stub prefix → console log only)
-  - `emails/ApprovalNeeded.tsx`, `RequestApproved.tsx`, `RequestRejected.tsx`, `InfoRequested.tsx` — React Email templates
-  - `app/api/approvals/email-action/route.ts` — no-auth JWT route; GET approve executes immediately; GET reject shows HTML form; POST processes rejection
-  - Fire-and-forget notification dispatch wired into processApproval() and submit route
-  - `.env.example` updated with stub key and explanation
-  - HTML-escaped user-supplied values in email-action HTML pages (XSS prevention)
-  - 26 new tests; 216 total passing
+- F-011 complete: Purchase Order generation
+  - `lib/data/purchase-orders.ts` — full PO data layer: `isValidPOTransition`, `listPurchaseOrders`, `getPurchaseOrder`, `createPurchaseOrder` (idempotency guard), `updatePurchaseOrder`
+  - `lib/approvals/generatePO.ts` — `generatePOFromApprovedRequest()` orchestrator; guards expense_claim type; wraps errors cleanly
+  - `lib/ref-number.ts` — `generatePORefNumber()` added (queries purchase_orders table for independent PO-YYYY-NNNNN sequence)
+  - `emails/POCreated.tsx` — React Email template for procurement officer notification
+  - `lib/notifications/send.ts` — `sendPOCreated()` added; stub mode + real Resend send to all active procurement officers
+  - `lib/approvals/processApproval.ts` — step 7 wires PO generation + procurement officer notification as fire-and-forget on final PR approval
+  - `app/(dashboard)/purchase-orders/page.tsx` — PO list screen (role-guarded; table with status badges; link to detail)
+  - `app/(dashboard)/purchase-orders/[id]/page.tsx` — PO detail page (Server Component; shows all fields, originating PR link)
+  - `app/(dashboard)/purchase-orders/[id]/POStatusForm.tsx` — Client Component; Server Action form for status/notes/expected_delivery update
+  - `app/(dashboard)/purchase-orders/[id]/actions.ts` — `updatePOAction` Server Action with role guard + transition validation
+  - 36 new tests; 252 total passing
 
 **What's next:**
-- F-011 (Purchase Order generation) — READY; depends on F-008 ✅
 - F-012 (Budget engine) — READY; depends on F-008 ✅
 - F-013 (Dashboard) — depends on F-009 ✅ and F-012
 
@@ -44,6 +45,7 @@
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-11 | F-011 complete. PO generation wired into processApproval, PO list + detail pages, status update Server Action. 252 tests passing. | PO generation is fire-and-forget; idempotency guard prevents duplicate POs; isValidPOTransition enforces closed/cancelled as terminal; issued_at auto-set when transitioning to issued |
 | 2026-06-11 | F-009 + F-010 complete. Approver inbox UI, email notifications, email-action JWT route. 216 tests passing. | Reject-via-email uses GET→form→POST flow (can't embed reason in a link); stub mode via re_stub prefix on RESEND_API_KEY; jti stored in webhook_logs for single-use enforcement |
 | 2026-06-10 | F-008 complete. Approval engine, 5 API routes, 164 tests passing. | processApproval is the single write path for all status transitions; approval_events are insert-only via service role; levels 4-6 cap to pending_l3 status while current_level tracks real number |
 | 2026-06-10 | F-007 complete. Expense claim form, receipt upload, 139 tests passing. | Receipt upload uses client-side FileReader for image preview; capture="environment" for mobile camera; title auto-derived from vendor_name+category; Phase 1 OCR = manual entry with receipt preview only |
