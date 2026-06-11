@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
-import { ArrowLeft, Paperclip, Clock } from 'lucide-react'
+import { ArrowLeft, Paperclip, Clock, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getRequest } from '@/lib/data/spend-requests'
 import { RequestStatusBadge } from '@/components/requests/RequestStatusBadge'
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { ApprovalEvent } from '@/types/domain'
+
+const PRIVILEGED_ROLES = ['procurement_officer', 'finance', 'admin', 'group_admin']
 
 const ACTION_LABELS: Record<string, string> = {
   submitted: 'Submitted',
@@ -46,6 +48,9 @@ export default async function RequestDetailPage({ params }: { params: Params }) 
   const isRequester = request.requester_id === profile.id
   const canCancel =
     isRequester && ['draft', 'pending_l1'].includes(request.status)
+  const canDownloadPdf =
+    !request.reference_no.startsWith('DRAFT-') &&
+    (isRequester || PRIVILEGED_ROLES.includes(profile.role))
 
   const events = (request.approval_events ?? []) as ApprovalEvent[]
   const attachments = request.attachments ?? []
@@ -88,6 +93,14 @@ export default async function RequestDetailPage({ params }: { params: Params }) 
             {request.status === 'draft' && isRequester && (
               <Button asChild variant="outline" size="sm">
                 <Link href={`/requests/new?draft=${request.id}`}>Edit draft</Link>
+              </Button>
+            )}
+            {canDownloadPdf && (
+              <Button asChild variant="outline" size="sm">
+                <a href={`/api/requests/${id}/audit-pdf`} download>
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Audit report
+                </a>
               </Button>
             )}
             <RequestDetailActions requestId={id} canCancel={canCancel} />
@@ -220,6 +233,13 @@ export default async function RequestDetailPage({ params }: { params: Params }) 
                           {formatDate(event.created_at)}
                         </span>
                       </div>
+                      {event.previous_status && event.new_status && (
+                        <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                          <span className="capitalize">{event.previous_status.replace(/_/g, ' ')}</span>
+                          <span>→</span>
+                          <span className="capitalize">{event.new_status.replace(/_/g, ' ')}</span>
+                        </div>
+                      )}
                       {event.comment && (
                         <p className="mt-1 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                           {event.comment}
