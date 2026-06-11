@@ -1,52 +1,159 @@
+import { Suspense } from 'react'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { Plus, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { MetricCards } from '@/components/dashboard/MetricCards'
+import { MetricCardsSkeleton } from '@/components/dashboard/MetricCardsSkeleton'
+import { BudgetAlertBanner } from '@/components/dashboard/BudgetAlertBanner'
+import { RecentRequestsWidget } from '@/components/dashboard/RecentRequestsWidget'
+import { ApprovalInbox } from '@/components/approvals/ApprovalInbox'
+import type { UserRole } from '@/types/domain'
+
+const APPROVER_ROLES = [
+  'approver_l1',
+  'approver_l2',
+  'approver_l3',
+  'procurement_officer',
+  'finance',
+  'admin',
+  'group_admin',
+]
+
+const BUDGET_ALERT_ROLES = ['finance', 'admin', 'group_admin']
+
+function timeOfDay(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'morning'
+  if (hour < 17) return 'afternoon'
+  return 'evening'
+}
+
+function RecentRequestsSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3" />
+      <div className="divide-y divide-slate-100">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 px-4 py-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 flex-1" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, full_name, role, entity_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) redirect('/login')
+
+  const year = new Date().getFullYear()
+  const role = profile.role as UserRole
+  const isApprover = APPROVER_ROLES.includes(role)
+  const showBudgetAlert = BUDGET_ALERT_ROLES.includes(role)
+
+  const firstName = (profile.full_name as string | null)?.split(' ')[0]
+    ?? user.email?.split('@')[0]
+    ?? 'there'
+
+  const today = new Date().toLocaleDateString('en-ZA', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 
   return (
     <div className="p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="mx-auto max-w-7xl">
+        {/* Header row */}
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Good {timeOfDay()}, {firstName}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">{today}</p>
+          </div>
 
-        {/* Header */}
+          {/* Quick-action buttons */}
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/expenses/new">
+                <FileText className="mr-1.5 h-4 w-4" />
+                New expense
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/requests/new">
+                <Plus className="mr-1.5 h-4 w-4" />
+                New request
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Budget alert banner — finance / admin / group_admin only */}
+        {showBudgetAlert && (
+          <div className="mb-6">
+            <Suspense fallback={null}>
+              <BudgetAlertBanner year={year} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* Metric cards */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Welcome back{user?.email ? `, ${user.email}` : ''}.
-          </p>
+          <Suspense fallback={<MetricCardsSkeleton />}>
+            <MetricCards userId={profile.id as string} role={role} year={year} />
+          </Suspense>
         </div>
 
-        {/* Metric cards — placeholders until F-012/F-013 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'My Pending Requests', value: '—' },
-            { label: 'Pending My Approval', value: '—' },
-            { label: 'Budget Utilisation', value: '—' },
-            { label: 'YTD Spend vs Budget', value: '—' },
-          ].map((card) => (
-            <div
-              key={card.label}
-              className="bg-white rounded-lg border border-slate-200 p-5"
-            >
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                {card.label}
-              </p>
-              <p className="mt-2 text-2xl font-semibold text-slate-400">{card.value}</p>
+        {/* Role-based main content */}
+        {isApprover ? (
+          <section aria-label="Pending approvals">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Pending approvals</h2>
+              <Link
+                href="/approvals"
+                className="text-sm font-medium text-slate-500 underline hover:text-slate-900"
+              >
+                View all
+              </Link>
             </div>
-          ))}
-        </div>
-
-        {/* Build status notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm font-medium text-blue-900">F-001 Scaffolding complete</p>
-          <p className="text-sm text-blue-700 mt-1">
-            Authentication is working. Database schema and UI features are built in subsequent
-            backlog items (F-003 onward).
-          </p>
-        </div>
-
+            <ApprovalInbox />
+          </section>
+        ) : (
+          <section aria-label="Recent requests">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Recent requests</h2>
+              <Link
+                href="/requests"
+                className="text-sm font-medium text-slate-500 underline hover:text-slate-900"
+              >
+                View all
+              </Link>
+            </div>
+            <Suspense fallback={<RecentRequestsSkeleton />}>
+              <RecentRequestsWidget userId={profile.id as string} />
+            </Suspense>
+          </section>
+        )}
       </div>
     </div>
   )
