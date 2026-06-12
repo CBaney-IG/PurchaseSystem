@@ -9,6 +9,7 @@ import {
 } from '@/lib/notifications/send'
 import { generatePOFromApprovedRequest } from './generatePO'
 import { updateCommitted } from '@/lib/data/budgets'
+import { resolveEffectiveApprover, getDelegationContextForActor } from '@/lib/data/delegations'
 
 // ---- Types ----
 
@@ -153,7 +154,7 @@ export async function processApproval(
     return { success: false, newStatus: currentStatus, error: updateErr.message }
   }
 
-  // 6. Insert immutable approval_event
+  // 6. Insert immutable approval_event (with delegation metadata if actor is a delegate)
   const eventAction =
     action === 'approve'
       ? 'approved'
@@ -163,6 +164,14 @@ export async function processApproval(
           ? 'info_requested'
           : 'info_provided'
 
+  let eventMetadata: Record<string, unknown> | null = null
+  if (action === 'approve' || action === 'reject') {
+    const delegationCtx = await getDelegationContextForActor(approverId).catch(() => null)
+    if (delegationCtx?.isDelegating && delegationCtx.delegatorId) {
+      eventMetadata = { delegated_action: true, delegated_by: delegationCtx.delegatorId }
+    }
+  }
+
   const { error: eventErr } = await service.from('approval_events').insert({
     request_id: requestId,
     approver_id: approverId,
@@ -171,6 +180,7 @@ export async function processApproval(
     comment: comment?.trim() ?? null,
     previous_status: currentStatus,
     new_status: newStatus,
+    metadata: eventMetadata,
   })
 
   if (eventErr) {
@@ -291,12 +301,27 @@ async function dispatchNotifications({
 
   if (newStatus.startsWith('pending_l') && action === 'approve') {
     const approverRole = `approver_l${newLevel}`
-    const { data: approvers } = await service
+    const { data: rawApprovers } = await service
       .from('profiles')
       .select('id, full_name, email')
       .eq('entity_id', request.entity_id as string)
       .eq('role', approverRole)
       .eq('active', true)
+
+    // Resolve delegations — if an approver has delegated authority, notify the delegate instead
+    const effectiveApprovers = await Promise.all(
+      (rawApprovers ?? []).map(async (approver) => {
+        const resolution = await resolveEffectiveApprover(approver.id).catch(() => null)
+        if (!resolution?.isDelegated || !resolution.effectiveId) return approver
+        // Fetch the delegate's profile for email
+        const { data: delegateProfile } = await service
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('id', resolution.effectiveId)
+          .single()
+        return delegateProfile ?? approver
+      })
+    )
 
     const { data: costCentre } = await service
       .from('cost_centres')
@@ -308,7 +333,7 @@ async function dispatchNotifications({
       request: reqData,
       requesterName: requester.full_name,
       costCentreCode: costCentre?.code ?? '',
-      approvers: approvers ?? [],
+      approvers: effectiveApprovers,
     })
   }
 }
