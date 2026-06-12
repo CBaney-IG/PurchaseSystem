@@ -4,8 +4,8 @@
 
 ## Active Phase
 
-**Phase:** Phase 5 — Integrations & Reporting (F-014, F-015, F-016)
-**Phase goal:** Snowflake data pipeline, audit PDF/CSV export, and auto-escalation.
+**Phase:** Phase 6 — Nice-to-Have MVP Features (F-018)
+**Phase goal:** Mobile PWA polish — manifest, service worker, camera receipt capture, WCAG audit.
 
 ## In Progress
 
@@ -15,25 +15,26 @@
 
 ## Last Session Summary
 
-**Date:** 2026-06-11
+**Date:** 2026-06-12
 **What was done:**
-- F-013 complete: Dashboard
-  - `lib/data/dashboard.ts` — `getDashboardMetrics()` (parallel queries: my pending count, pending approval count, entity budget utilisation, YTD spend); `getOverBudgetCostCentres()` (cost centres ≥90% committed); `getMyRecentRequests()`
-  - `components/dashboard/MetricCards.tsx` — async Server Component; 4 metric cards with colour-coded values (green/amber/red thresholds)
-  - `components/dashboard/MetricCardsSkeleton.tsx` — Suspense fallback skeleton
-  - `components/dashboard/BudgetAlertBanner.tsx` — async Server Component; amber warning banner for finance/admin/group_admin
-  - `components/dashboard/RecentRequestsWidget.tsx` — async Server Component; last 10 requests for requesters
-  - `app/(dashboard)/dashboard/page.tsx` — replaced placeholder; Suspense boundaries for each async section; role-based content (ApprovalInbox for approvers, RecentRequestsWidget for requesters); quick-action buttons
-  - 21 new tests; 296 total passing
+- F-017 complete: Approval Delegation
+  - `lib/data/delegations.ts` — data layer: listMyDelegations, getMyActiveDelegation, resolveEffectiveApprover, getDelegationContextForActor, createDelegation (overlap + self-delegation guards), cancelDelegation (ownership check)
+  - `app/api/admin/delegations/route.ts` — GET/POST/DELETE; POST sends DelegationActive email fire-and-forget
+  - `emails/DelegationActive.tsx` — email template (delegator confirmation + delegate notification, green banner)
+  - `lib/notifications/send.ts` — sendDelegationNotification() (stub-mode aware, renders both sides)
+  - `lib/approvals/processApproval.ts` — delegation hooks: records `metadata: { delegated_action, delegated_by }` on events; resolves delegates when routing next-level notifications via resolveEffectiveApprover
+  - `components/delegations/DelegationForm.tsx` + `DelegationList.tsx` — create + list/cancel UI with Dialog confirm
+  - `components/ui/card.tsx` — shadcn Card (was missing from initial scaffold)
+  - `app/(dashboard)/profile/page.tsx` — profile page: account details card + delegation section (shown only for approver roles)
+  - 19 new tests; 315 total passing
 
 **What's next:**
-- F-014 (Snowflake integration) — READY; depends on F-008 ✅
-- F-015 (Audit trail & reports) — READY; depends on F-008 ✅
+- F-018 (Mobile PWA) — READY; depends on F-013 ✅
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
 - Apply migrations to cloud: `supabase db push --project-ref otjyioljufgcccgsdiuk`
-- Snowflake endpoint URL — Data team (needed for F-014)
+- Snowflake endpoint URL — Data team (needed for F-014 — built with stub, ready to wire)
 - Resend API key — get real key from resend.com; replace re_stub placeholder in .env.local
 - Regenerate `types/supabase.ts` from live schema: `supabase gen types typescript --project-id otjyioljufgcccgsdiuk > types/supabase.ts`
 
@@ -41,6 +42,7 @@
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-12 | F-014 + F-015 + F-016 + F-017 complete. Snowflake webhook, audit PDF/CSV, auto-escalation, approval delegation. 315 tests. | F-014/F-015/F-016 branches pending PRs; F-017 on feature/F-017; delegation overlap check: valid_from < newUntil AND valid_until > newFrom; DelegationActive email renders two variants via isDelegator prop |
 | 2026-06-11 | F-013 complete. Dashboard: 4 metric cards, Suspense streaming, role-based content (approver inbox vs recent requests), budget alert banner. 296 tests passing. | Async Server Components + Suspense for metric cards and request list; ApprovalInbox reused on dashboard; join cast via `as unknown as` (Supabase types join as array before type regen) |
 | 2026-06-11 | F-012 complete. Budget engine — committed tracking on submit/cancel/reject, 90% alert emails. 275 tests. | Fire-and-forget pattern for budget increments/decrements; BudgetWarning email previewText must be pre-computed string (not JSX with embedded number) |
 | 2026-06-11 | F-011 complete. PO generation wired into processApproval, PO list + detail pages, status update Server Action. 252 tests passing. | PO generation is fire-and-forget; idempotency guard prevents duplicate POs; isValidPOTransition enforces closed/cancelled as terminal; issued_at auto-set when transitioning to issued |
