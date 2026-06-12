@@ -80,26 +80,26 @@ export default async function DashboardPage() {
   })
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
         {/* Header row */}
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
+            <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
               Good {timeOfDay()}, {firstName}
             </h1>
             <p className="mt-1 text-sm text-slate-500">{today}</p>
           </div>
 
           {/* Quick-action buttons */}
-          <div className="flex flex-shrink-0 items-center gap-2">
-            <Button asChild variant="outline" size="sm">
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
               <Link href="/expenses/new">
                 <FileText className="mr-1.5 h-4 w-4" />
                 New expense
               </Link>
             </Button>
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="flex-1 sm:flex-none">
               <Link href="/requests/new">
                 <Plus className="mr-1.5 h-4 w-4" />
                 New request
