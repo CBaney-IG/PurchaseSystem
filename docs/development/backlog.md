@@ -66,7 +66,7 @@
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
 | F-017 | Approval delegation — set delegate, date range, validation, routing override, audit of delegated actions | P1 | ✅ | F-009 | 2d | feature/F-017 | 2026-06-12 |
-| F-018 | Mobile PWA — manifest, service worker, camera receipt capture, responsive layout audit, WCAG 2.1 AA pass | P1 | 📋 | F-013 | 2d | | |
+| F-018 | Mobile PWA — manifest, service worker, camera receipt capture, responsive layout audit, WCAG 2.1 AA pass | P1 | ✅ | F-013 | 2d | feature/F-018 | 2026-06-12 |
 
 ## Phase 7: UAT & Hardening
 > Goal: E2E test coverage matching FRS §11; bug fixes; UAT with business stakeholders.

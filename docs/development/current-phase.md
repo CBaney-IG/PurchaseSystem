@@ -4,8 +4,8 @@
 
 ## Active Phase
 
-**Phase:** Phase 6 — Nice-to-Have MVP Features (F-018)
-**Phase goal:** Mobile PWA polish — manifest, service worker, camera receipt capture, WCAG audit.
+**Phase:** Phase 7 — UAT & Hardening (F-019, F-020)
+**Phase goal:** E2E Playwright test suite and UAT sign-off with business stakeholders.
 
 ## In Progress
 
@@ -17,6 +17,16 @@
 
 **Date:** 2026-06-12
 **What was done:**
+- F-018 complete: Mobile PWA
+  - `public/manifest.json` — standalone PWA manifest, 3 shortcuts, 192+512 icons
+  - `public/sw.js` — service worker: cache-first for static, network-only for /api/ and /auth/, navigation fallback
+  - `app/layout.tsx` — manifest, Apple web app meta tags, theme-color viewport, SW registration
+  - `next.config.ts` — camera=(self) permission policy (was blocking receipt capture), Service-Worker-Allowed header
+  - `components/sidebar.tsx` — full mobile redesign: fixed top bar + hamburger, slide-over panel with backdrop overlay; desktop sidebar unchanged; all buttons 44×44px min touch target; aria-labels
+  - `app/(dashboard)/layout.tsx` + `dashboard/page.tsx` — pt-14 mobile clearance, responsive padding and header row
+  - `app/globals.css` — overflow-x: hidden
+  - 32 new tests; 360 total passing
+
 - F-017 complete: Approval Delegation
   - `lib/data/delegations.ts` — data layer: listMyDelegations, getMyActiveDelegation, resolveEffectiveApprover, getDelegationContextForActor, createDelegation (overlap + self-delegation guards), cancelDelegation (ownership check)
   - `app/api/admin/delegations/route.ts` — GET/POST/DELETE; POST sends DelegationActive email fire-and-forget
@@ -29,7 +39,7 @@
   - 19 new tests; 315 total passing
 
 **What's next:**
-- F-018 (Mobile PWA) — READY; depends on F-013 ✅
+- F-019 (E2E Playwright tests) — READY; all Phase 5 features complete ✅
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
@@ -42,6 +52,7 @@
 
 | Date | Summary | Key Decisions |
 |---|---|---|
+| 2026-06-12 | F-018 complete. Mobile PWA: manifest, service worker, responsive sidebar with slide-over, 44px touch targets. 360 tests. | Sidebar rebuilt with hidden md:flex pattern; mobile top bar fixed at 56px, dashboard pt-14 clears it; camera=(self) was missing from Permissions-Policy — was silently blocking receipt capture |
 | 2026-06-12 | F-014 + F-015 + F-016 + F-017 complete. Snowflake webhook, audit PDF/CSV, auto-escalation, approval delegation. 315 tests. | F-014/F-015/F-016 merged via PR; F-017 on feature/F-017; delegation overlap check: valid_from < newUntil AND valid_until > newFrom; DelegationActive email renders two variants via isDelegator prop |
 | 2026-06-11 | F-016 complete. Auto-escalation: 24h reminder + 48h manager escalation engine, two email templates, escalation-check API route. 317 tests passing. | checkEscalations is a Next.js API route (not Edge Function) for local dev; idempotency via notifications + approval_events guards; non-enumerable `then` on mock chains can't be spread — use call-count tracking instead |
 | 2026-06-11 | F-013 complete. Dashboard: 4 metric cards, Suspense streaming, role-based content (approver inbox vs recent requests), budget alert banner. 296 tests passing. | Async Server Components + Suspense for metric cards and request list; ApprovalInbox reused on dashboard; join cast via `as unknown as` (Supabase types join as array before type regen) |
