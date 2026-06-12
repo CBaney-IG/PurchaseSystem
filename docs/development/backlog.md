@@ -59,6 +59,8 @@
 | F-014 | Snowflake integration — webhook handler, payload transformation, webhook_logs retry table, scheduled Edge Function for budget positions | P0 | 📋 | F-008 | 3d | | |
 | F-015 | Audit trail & reports — per-document timeline, PDF audit report export, CSV bulk export, 7-year retention policy | P0 | 📋 | F-008 | 2d | | |
 | F-016 | Auto-escalation — Supabase Edge Function cron (every 30 min), 24h reminder, 48h manager escalation | P1 | ✅ | F-009, F-010 | 1d | feature/F-016 | 2026-06-11 |
+| F-015 | Audit trail & reports — per-document timeline, PDF audit report export, CSV bulk export, 7-year retention policy | P0 | ✅ | F-008 | 2d | feature/F-015 | 2026-06-11 |
+| F-016 | Auto-escalation — Supabase Edge Function cron (every 30 min), 24h reminder, 48h manager escalation | P1 | 📋 | F-009, F-010 | 1d | | |
 
 ## Phase 6: Nice-to-Have MVP Features
 > Goal: Approval delegation, mobile PWA polish.

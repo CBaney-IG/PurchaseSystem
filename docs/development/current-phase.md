@@ -29,6 +29,18 @@
 **What's next:**
 - F-014 (Snowflake integration) — READY; on branch feature/F-014 (stubbed with STUB:// mode)
 - F-015 (Audit trail & reports) — READY; on branch feature/F-015
+- F-015 complete: Audit trail & reports
+  - `lib/data/reports.ts` — `getAuditLog()` with date/type/action filters and pagination; `getRequestForPDF()` with budget impact and sorted events
+  - `lib/pdf/AuditReportDocument.tsx` — React-PDF template; sections: header, document details, budget impact, approval event timeline with status transitions, fixed footer with page numbers
+  - `app/api/requests/[id]/audit-pdf/route.ts` — PDF download endpoint; accessible to requester or privileged roles; returns `Content-Disposition: attachment`
+  - `app/api/reports/audit-csv/route.ts` — CSV export (up to 10k rows); restricted to admin/finance/procurement_officer/group_admin
+  - `app/(dashboard)/reports/page.tsx` — audit log table with filter panel, pagination, Export CSV button
+  - `components/reports/AuditLogFilters.tsx` — client component; date range, document type, action filters; syncs to URL search params
+  - `app/(dashboard)/requests/[id]/page.tsx` — added Audit Report PDF download button; timeline now shows previous_status → new_status transitions
+  - 11 new tests; 307 total passing
+
+**What's next:**
+- F-014 (Snowflake integration) — READY; depends on F-008 ✅
 
 **Open questions / blockers:**
 - Azure AD credentials (AZURE_AD_TENANT_ID, CLIENT_ID, CLIENT_SECRET) — IT Director
