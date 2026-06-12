@@ -7,6 +7,7 @@ import RequestRejected from '@/emails/RequestRejected'
 import InfoRequested from '@/emails/InfoRequested'
 import POCreated from '@/emails/POCreated'
 import BudgetWarning from '@/emails/BudgetWarning'
+import DelegationActive from '@/emails/DelegationActive'
 import ApprovalReminder from '@/emails/ApprovalReminder'
 import ApprovalEscalated from '@/emails/ApprovalEscalated'
 
@@ -500,6 +501,57 @@ export async function sendBudgetWarning(params: BudgetWarningParams): Promise<Se
       await resend.emails.send({ from, to: recipient.email, subject, html })
     })
   )
+
+  return { sent: true }
+}
+
+// ── Delegation notification ──────────────────────────────────────────────────
+
+export interface DelegationNotificationParams {
+  delegator: { email: string; full_name: string }
+  delegate: { email: string; full_name: string }
+  validFrom: string   // formatted date string, e.g. "12 Jun 2026"
+  validUntil: string
+  reason: string | null
+}
+
+export async function sendDelegationNotification(
+  params: DelegationNotificationParams
+): Promise<SendResult> {
+  const { delegator, delegate, validFrom, validUntil, reason } = params
+  const appUrl = getAppUrl()
+
+  const subject = `Approval delegation — ${delegator.full_name} → ${delegate.full_name}`
+
+  if (isStubKey()) {
+    console.log('[email:stub] sendDelegationNotification', {
+      toDelegator: delegator.email,
+      toDelegate: delegate.email,
+      subject,
+    })
+    return { sent: false, reason: 'stub' }
+  }
+
+  const resend = getResend()
+  const from = getFromAddress()
+  const sharedData = {
+    delegatorName: delegator.full_name,
+    delegateName: delegate.full_name,
+    validFrom,
+    validUntil,
+    reason,
+    platformUrl: `${appUrl}/profile`,
+  }
+
+  const [delegatorHtml, delegateHtml] = await Promise.all([
+    render(DelegationActive({ ...sharedData, recipientName: delegator.full_name, isDelegator: true })),
+    render(DelegationActive({ ...sharedData, recipientName: delegate.full_name, isDelegator: false })),
+  ])
+
+  await Promise.all([
+    resend.emails.send({ from, to: delegator.email, subject, html: delegatorHtml }),
+    resend.emails.send({ from, to: delegate.email, subject, html: delegateHtml }),
+  ])
 
   return { sent: true }
 }
