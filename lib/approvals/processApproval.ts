@@ -10,6 +10,9 @@ import {
 import { generatePOFromApprovedRequest } from './generatePO'
 import { updateCommitted } from '@/lib/data/budgets'
 import { resolveEffectiveApprover, getDelegationContextForActor } from '@/lib/data/delegations'
+import { transformApprovalEvent } from '@/lib/snowflake/transform'
+import { pushApprovalEvent } from '@/lib/snowflake/push'
+import type { ApprovalEventRow, SpendRequestRow } from '@/lib/snowflake/transform'
 
 // ---- Types ----
 
@@ -186,6 +189,28 @@ export async function processApproval(
   if (eventErr) {
     return { success: false, newStatus: currentStatus, error: eventErr.message }
   }
+
+  // 7. Fire-and-forget: push approval event to Snowflake
+  // Works locally without Supabase DB Webhook configured.
+  // In production the DB Webhook also fires as a belt-and-suspenders fallback.
+  const snowflakePayload = transformApprovalEvent(
+    {
+      id: 'pending', // actual ID not returned by insert; webhook handler will re-fetch if needed
+      request_id: requestId,
+      approver_id: approverId,
+      level: currentLevel,
+      action: eventAction,
+      comment: comment?.trim() ?? null,
+      previous_status: currentStatus,
+      new_status: newStatus,
+      metadata: null,
+      created_at: new Date().toISOString(),
+    } satisfies ApprovalEventRow,
+    { ...request, amount: request.amount as number } as unknown as SpendRequestRow
+  )
+  pushApprovalEvent(snowflakePayload).catch(err =>
+    console.error('[snowflake] pushApprovalEvent failed:', err)
+  )
 
   // 7a. Decrement committed spend on rejection — fire-and-forget
   if (action === 'reject') {

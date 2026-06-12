@@ -8,6 +8,8 @@ import InfoRequested from '@/emails/InfoRequested'
 import POCreated from '@/emails/POCreated'
 import BudgetWarning from '@/emails/BudgetWarning'
 import DelegationActive from '@/emails/DelegationActive'
+import ApprovalReminder from '@/emails/ApprovalReminder'
+import ApprovalEscalated from '@/emails/ApprovalEscalated'
 
 function isStubKey(): boolean {
   return (process.env.RESEND_API_KEY ?? '').startsWith('re_stub')
@@ -288,6 +290,167 @@ export async function sendPOCreated(params: POCreatedParams): Promise<SendResult
       })
     })
   )
+
+  return { sent: true }
+}
+
+// ── Approval reminder (24h overdue) ─────────────────────────────────────────
+
+export interface ApprovalReminderParams {
+  request: {
+    id: string
+    reference_no: string
+    title: string
+    type: string
+    category: string
+    amount: number
+    currency: string
+    justification: string | null
+    budget_flag: boolean
+    priority: string
+  }
+  requesterName: string
+  costCentreCode: string
+  hoursOverdue: number
+  approvers: { id: string; email: string; full_name: string }[]
+}
+
+export async function sendApprovalReminder(params: ApprovalReminderParams): Promise<SendResult> {
+  const { request, requesterName, costCentreCode, hoursOverdue, approvers } = params
+
+  if (approvers.length === 0) {
+    console.warn('[email] sendApprovalReminder: no approvers for', request.reference_no)
+    return { sent: false, reason: 'no_approvers' }
+  }
+
+  const subject = `[Reminder] Approval overdue — ${request.reference_no}: ${request.title}`
+  const appUrl = getAppUrl()
+
+  if (isStubKey()) {
+    console.log('[email:stub] sendApprovalReminder', {
+      to: approvers.map(a => a.email),
+      subject,
+      hoursOverdue,
+    })
+    return { sent: false, reason: 'stub' }
+  }
+
+  const resend = getResend()
+  const from = getFromAddress()
+
+  await Promise.all(
+    approvers.map(async (approver) => {
+      const [approveToken, rejectToken] = await Promise.all([
+        signEmailToken({ requestId: request.id, approverId: approver.id, action: 'approve' }),
+        signEmailToken({ requestId: request.id, approverId: approver.id, action: 'reject' }),
+      ])
+
+      const approveUrl = `${appUrl}/api/approvals/email-action?token=${encodeURIComponent(approveToken)}`
+      const rejectUrl = `${appUrl}/api/approvals/email-action?token=${encodeURIComponent(rejectToken)}`
+
+      const html = await render(
+        ApprovalReminder({
+          requestRef: request.reference_no,
+          requestTitle: request.title,
+          requestType: request.type === 'purchase_request' ? 'Purchase Request' : 'Expense Claim',
+          category: request.category,
+          amount: request.amount,
+          currency: request.currency,
+          requesterName,
+          costCentreCode,
+          justification: request.justification,
+          priority: request.priority,
+          budgetFlag: request.budget_flag,
+          approverName: approver.full_name,
+          hoursOverdue,
+          approveUrl,
+          rejectUrl,
+          platformUrl: `${appUrl}/approvals`,
+        })
+      )
+
+      await resend.emails.send({ from, to: approver.email, subject, html })
+    })
+  )
+
+  return { sent: true }
+}
+
+// ── Escalation alert ─────────────────────────────────────────────────────────
+
+export interface EscalationAlertParams {
+  request: {
+    reference_no: string
+    title: string
+    type: string
+    amount: number
+    currency: string
+  }
+  requesterName: string
+  originalApproverName: string
+  hoursOverdue: number
+  escalationTargets: { email: string; full_name: string }[]
+  requester: { email: string; full_name: string }
+}
+
+export async function sendEscalationAlert(params: EscalationAlertParams): Promise<SendResult> {
+  const { request, requesterName, originalApproverName, hoursOverdue, escalationTargets, requester } = params
+  const appUrl = getAppUrl()
+
+  const subject = `[Escalated] ${request.reference_no}: ${request.title} — manager action required`
+
+  if (isStubKey()) {
+    console.log('[email:stub] sendEscalationAlert', {
+      toManagers: escalationTargets.map(t => t.email),
+      toRequester: requester.email,
+      subject,
+      hoursOverdue,
+    })
+    return { sent: false, reason: 'stub' }
+  }
+
+  const resend = getResend()
+  const from = getFromAddress()
+
+  const emailData = {
+    requestRef: request.reference_no,
+    requestTitle: request.title,
+    requestType: request.type === 'purchase_request' ? 'Purchase Request' : 'Expense Claim',
+    amount: request.amount,
+    currency: request.currency,
+    requesterName,
+    hoursOverdue,
+    originalApproverName,
+  }
+
+  await Promise.all([
+    ...escalationTargets.map(async (target) => {
+      const html = await render(
+        ApprovalEscalated({
+          ...emailData,
+          recipientName: target.full_name,
+          isManager: true,
+          platformUrl: `${appUrl}/approvals`,
+        })
+      )
+      await resend.emails.send({ from, to: target.email, subject, html })
+    }),
+    (async () => {
+      const html = await render(
+        ApprovalEscalated({
+          ...emailData,
+          recipientName: requester.full_name,
+          isManager: false,
+          platformUrl: `${appUrl}/requests`,
+        })
+      )
+      await resend.emails.send({
+        from, to: requester.email,
+        subject: `Your request ${request.reference_no} has been escalated`,
+        html,
+      })
+    })(),
+  ])
 
   return { sent: true }
 }
