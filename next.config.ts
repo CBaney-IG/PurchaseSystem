@@ -8,7 +8,8 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-XSS-Protection', value: '1; mode=block' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  // camera=(self) required for mobile receipt capture on /expenses/new
+  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
   {
     key: 'Content-Security-Policy',
     value: [
@@ -26,7 +27,14 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
   async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }]
+    return [
+      { source: '/(.*)', headers: securityHeaders },
+      // Allow service worker to control the full origin scope
+      {
+        source: '/sw.js',
+        headers: [{ key: 'Service-Worker-Allowed', value: '/' }],
+      },
+    ]
   },
   images: {
     remotePatterns: [{ hostname: '*.supabase.co' }],

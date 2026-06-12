@@ -56,19 +56,17 @@
 
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
-| F-014 | Snowflake integration — webhook handler, payload transformation, webhook_logs retry table, scheduled Edge Function for budget positions | P0 | 📋 | F-008 | 3d | | |
-| F-015 | Audit trail & reports — per-document timeline, PDF audit report export, CSV bulk export, 7-year retention policy | P0 | 📋 | F-008 | 2d | | |
-| F-016 | Auto-escalation — Supabase Edge Function cron (every 30 min), 24h reminder, 48h manager escalation | P1 | ✅ | F-009, F-010 | 1d | feature/F-016 | 2026-06-11 |
-| F-015 | Audit trail & reports — per-document timeline, PDF audit report export, CSV bulk export, 7-year retention policy | P0 | ✅ | F-008 | 2d | feature/F-015 | 2026-06-11 |
-| F-016 | Auto-escalation — Supabase Edge Function cron (every 30 min), 24h reminder, 48h manager escalation | P1 | 📋 | F-009, F-010 | 1d | | |
+| F-014 | Snowflake integration — webhook handler, payload transformation, webhook_logs retry table, scheduled Edge Function for budget positions | P0 | ✅ | F-008 | 3d | feature/F-014 | 2026-06-12 |
+| F-015 | Audit trail & reports — per-document timeline, PDF audit report export, CSV bulk export, 7-year retention policy | P0 | ✅ | F-008 | 2d | feature/F-015 | 2026-06-12 |
+| F-016 | Auto-escalation — Supabase Edge Function cron (every 30 min), 24h reminder, 48h manager escalation | P1 | ✅ | F-009, F-010 | 1d | feature/F-016 | 2026-06-12 |
 
 ## Phase 6: Nice-to-Have MVP Features
 > Goal: Approval delegation, mobile PWA polish.
 
 | ID | Feature | Priority | Status | Dependencies | Est. | Branch | Completed |
 |----|---------|----------|--------|--------------|------|--------|-----------|
-| F-017 | Approval delegation — set delegate, date range, validation, routing override, audit of delegated actions | P1 | 📋 | F-009 | 2d | | |
-| F-018 | Mobile PWA — manifest, service worker, camera receipt capture, responsive layout audit, WCAG 2.1 AA pass | P1 | 📋 | F-013 | 2d | | |
+| F-017 | Approval delegation — set delegate, date range, validation, routing override, audit of delegated actions | P1 | ✅ | F-009 | 2d | feature/F-017 | 2026-06-12 |
+| F-018 | Mobile PWA — manifest, service worker, camera receipt capture, responsive layout audit, WCAG 2.1 AA pass | P1 | ✅ | F-013 | 2d | feature/F-018 | 2026-06-12 |
 
 ## Phase 7: UAT & Hardening
 > Goal: E2E test coverage matching FRS §11; bug fixes; UAT with business stakeholders.

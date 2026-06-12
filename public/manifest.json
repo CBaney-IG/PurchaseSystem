@@ -1,0 +1,45 @@
+{
+  "name": "Purchase System — BPO Group",
+  "short_name": "PurchaseSystem",
+  "description": "Unified Spend Management Platform for BPO Group",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0f172a",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance"],
+  "shortcuts": [
+    {
+      "name": "New Purchase Request",
+      "short_name": "New PR",
+      "url": "/requests/new",
+      "description": "Submit a new purchase request"
+    },
+    {
+      "name": "New Expense Claim",
+      "short_name": "New Expense",
+      "url": "/expenses/new",
+      "description": "Submit an expense claim with receipt"
+    },
+    {
+      "name": "Approval Inbox",
+      "short_name": "Approvals",
+      "url": "/approvals",
+      "description": "Review pending approval requests"
+    }
+  ]
+}
